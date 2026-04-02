@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'quiz_list' %}" style="text-decoration: none; color: var(--primary);">← Back to Quizzes</a>
+    <h1 style="margin-bottom: 5px;">Pool for: {{ quiz.title }}</h1>
+    <p style="color: #64748b; margin-top: 0;">
+        This quiz will randomly select <strong>{{ quiz.total_questions_limit }}</strong> questions from the <strong>{{ total_count }}</strong> questions shown below.
+    </p>
+</div>
+
+<div style="display: grid; gap: 20px;">
+    {% for q in page_obj %}
+    <div class="card" style="border-left: 4px solid #8b5cf6;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <p style="font-size: 0.75rem; font-weight: bold; color: #64748b; margin: 0;">
+                {{ q.type }} | {{ q.difficulty }}
+            </p>
+            <span style="background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: #475569;">
+                {{ q.job_level.job.name }} - {{ q.job_level.level_name }}
+            </span>
+        </div>
+
+        <h3 style="margin: 0 0 15px 0;">{{ q.question_prompt }}</h3>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            {% for opt in q.options.all %}
+                <div style="padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; {% if opt.is_correct %} background: #f0fdf4; border-color: #22c55e; {% endif %}">
+                    {{ opt.option_text }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+    <p>No questions found. Make sure the levels you selected have questions generated!</p>
+    {% endfor %}
+</div>
+
+<div style="margin-top: 30px; display: flex; justify-content: center; gap: 10px; align-items: center;">
+    {% if page_obj.has_previous %}
+        <a href="?page=1" class="btn" style="background: #f1f5f9; color: #475569;">&laquo; First</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="btn">Previous</a>
+    {% endif %}
+
+    <span style="font-weight: 600;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="btn">Next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}" class="btn" style="background: #f1f5f9; color: #475569;">Last &raquo;</a>
+    {% endif %}
+</div>
+{% endblock %}

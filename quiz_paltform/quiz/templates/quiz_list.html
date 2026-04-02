@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if messages %}
+    {% for message in messages %}
+        {% if 'magic_link' in message.tags %}
+        <div id="linkModal" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px);">
+            <div style="background: white; padding: 40px; border-radius: 20px; width: 500px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); position: relative;">
+                <div style="background: #dcfce7; color: #166534; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px;">✅</div>
+                <h2 style="margin: 0; color: #1e293b; font-size: 1.5rem;">Quiz Assigned!</h2>
+                <div style="display: flex; gap: 10px; background: #f8fafc; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0; align-items: center; margin-top: 20px;">
+                    <input type="text" id="copyInput" value="{{ message }}" readonly style="flex: 1; border: none; background: transparent; padding: 10px; font-family: monospace; font-size: 0.85rem; color: #475569; outline: none;">
+                    <button onclick="copyToClipboard(this)" style="background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">Copy</button>
+                </div>
+                <button onclick="document.getElementById('linkModal').remove()" style="margin-top: 25px; background: none; border: none; color: #94a3b8; cursor: pointer; text-decoration: underline;">Close</button>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h1 style="color: #1e293b;">Quiz Templates</h1>
+    <a href="{% url 'create_quiz' %}" class="btn" style="background: #4f46e5; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">+ Create New Quiz</a>
+</div>
+
+<div style="display: grid; gap: 25px;">
+    {% for quiz in quizzes %}
+    <div class="card" style="display: flex; flex-direction: column; padding: 25px; background: white; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+            <div>
+                <h3 style="margin: 0; color: #1e293b; font-size: 1.4rem;">{{ quiz.title }}</h3>
+                <small style="color: #94a3b8;">Created: {{ quiz.created_at|date:"M d, Y" }} | Total Qs: <strong>{{ quiz.total_questions_limit }}</strong></small>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a href="{% url 'view_quiz_questions' quiz.id %}" style="text-decoration: none; color: #6366f1; font-weight: 600; font-size: 0.9rem; padding: 8px 12px; border: 1px solid #e0e7ff; border-radius: 6px;">View Pool</a>
+                <a href="{% url 'create_assignment' quiz.id %}" style="text-decoration: none; background: #6366f1; color: white; font-weight: 600; font-size: 0.9rem; padding: 8px 16px; border-radius: 6px;">Assign</a>
+                <form action="{% url 'delete_quiz' quiz.id %}" method="POST" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" onclick="return confirm('Delete?')" style="background: #fee2e2; border: 1px solid #fecaca; color: #ef4444; padding: 7px; border-radius: 6px; cursor: pointer;">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <span style="background: #4f46e5; color: white; font-size: 10px; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; font-weight: 800;">Primary Phase</span>
+                <div style="flex: 1; height: 1px; background: #eef2ff;"></div>
+            </div>
+            <div style="padding-left: 10px;">
+                <p style="margin: 5px 0; font-weight: 600; color: #334155; font-size: 0.95rem;">
+                    {% for l in quiz.primary_job_levels.all %}{{ l.job.name }} ({{ l.level_name }}){% if not forloop.last %}, {% endif %}{% endfor %}
+                </p>
+                <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 8px 12px; border-radius: 8px; width: fit-content; margin-top: 5px; border: 1px solid #f1f5f9;">
+                    <span><strong>Easy:</strong> {{ quiz.easy_count }}</span>
+                    <span><strong>Medium:</strong> {{ quiz.medium_count }}</span>
+                    <span><strong>Hard:</strong> {{ quiz.hard_count }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <span style="background: #0891b2; color: white; font-size: 10px; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; font-weight: 800;">Secondary Phase</span>
+                <div style="flex: 1; height: 1px; background: #ecfeff;"></div>
+            </div>
+            <div style="padding-left: 10px;">
+                <p style="margin: 5px 0; font-weight: 600; color: #334155; font-size: 0.95rem;">
+                    {% if quiz.secondary_job_levels.exists %}
+                        {% for l in quiz.secondary_job_levels.all %}{{ l.job.name }} ({{ l.level_name }}){% if not forloop.last %}, {% endif %}{% endfor %}
+                    {% else %}
+                        <span style="font-style: italic; color: #94a3b8; font-weight: 400;">Reusing Primary JDs</span>
+                    {% endif %}
+                </p>
+                <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #0891b2; background: #f0fdfa; padding: 8px 12px; border-radius: 8px; width: fit-content; margin-top: 5px; border: 1px solid #ccfbf1;">
+                    <span><strong>Easy:</strong> {{ quiz.sec_easy_count }}</span>
+                    <span><strong>Medium:</strong> {{ quiz.sec_medium_count }}</span>
+                    <span><strong>Hard:</strong> {{ quiz.sec_hard_count }}</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 60px; color: #94a3b8;">
+        <p>No templates found.</p>
+        <a href="{% url 'create_quiz' %}" style="color: #4f46e5; font-weight: 600;">Create One Now</a>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+function copyToClipboard(btn) {
+    const copyText = document.getElementById("copyInput");
+    copyText.select();
+    navigator.clipboard.writeText(copyText.value);
+    btn.innerText = "Copied!";
+    btn.style.background = "#10b981";
+    setTimeout(() => { btn.innerText = "Copy"; btn.style.background = "#4f46e5"; }, 2000);
+}
+</script>
+{% endblock %}

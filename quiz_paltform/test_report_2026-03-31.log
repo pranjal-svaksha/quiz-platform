@@ -1,0 +1,122 @@
+22 objects imported automatically (use -v 2 for details).
+
+Using quiz: test2
+  Easy: 5, Medium: 10, Hard: 5, Secondary: 5
+  QuizQuestions saved: 50
+
+============================================================
+SCENARIO 1: Promote Easy → Medium
+============================================================
+
+Created assessment: 68f69fca-3704-4f4c-858c-f1bebd0a1ecc
+Session: 32753669-5c68-429e-89f3-5679fe82ce50 | Difficulty: Easy | Score: 0
+  [Q1 correct] Q1: Easy | correct=True | result=stay | now=Easy | score=1 | streak C=1 W=0
+  [Q2 correct → PROMOTE] Q2: Easy | correct=True | result=promote | now=Medium | score=2 | streak C=0 W=0
+  Expected: Medium | Got: Medium
+
+============================================================
+SCENARIO 2: Demote Medium → Easy
+============================================================
+
+Created assessment: 46d63161-3b03-468b-b134-d074c3a786dd
+Session: 25f5b139-ab0e-4fcf-8158-47f0a4dfb389 | Difficulty: Easy | Score: 0
+  [Q1 wrong] Q1: Medium | correct=False | result=stay | now=Medium | score=0 | streak C=0 W=1
+  [Q2 wrong → DEMOTE] Q2: Medium | correct=False | result=demote | now=Easy | score=-1 | streak C=0 W=0
+  Expected: Easy | Got: Easy
+
+============================================================
+SCENARIO 3: Alternating right-wrong (should stay at Easy)
+============================================================
+
+Created assessment: 7098e3d3-3c08-4b99-9090-34bd5c4cca46
+Session: 2dc9d4df-a6ce-4b06-b11e-9e113d901c97 | Difficulty: Easy | Score: 0
+  [Q1] Q1: Easy | correct=True | result=stay | now=Easy | score=1 | streak C=1 W=0
+  [Q2] Q2: Easy | correct=False | result=stay | now=Easy | score=1 | streak C=0 W=1
+  [Q3] Q3: Easy | correct=True | result=stay | now=Easy | score=2 | streak C=1 W=0
+  [Q4] Q4: Easy | correct=False | result=stay | now=Easy | score=2 | streak C=0 W=1
+  [Q5] Q5: Easy | correct=True | result=stay | now=Easy | score=3 | streak C=1 W=0
+  [Q6] Q6: Easy | correct=False | result=stay | now=Easy | score=2 | streak C=0 W=1
+  Expected: Easy throughout | Final: Easy
+
+============================================================
+SCENARIO 4: Full promote chain
+============================================================
+
+Created assessment: f9405e00-dfaf-49fc-a5af-5fd991020372
+Session: f46ce217-2109-4bb6-8a77-be1fad68864c | Difficulty: Easy | Score: 0
+  [Q1] Q1: Easy | correct=True | result=stay | now=Easy | score=1 | streak C=1 W=0
+  [Q2] Q2: Easy | correct=True | result=promote | now=Medium | score=2 | streak C=0 W=0
+  [Q3] Q3: Medium | correct=True | result=stay | now=Medium | score=4 | streak C=1 W=0
+  [Q4] Q4: Medium | correct=True | result=promote | now=Hard | score=6 | streak C=0 W=0
+  [Q5] Q5: Hard | correct=True | result=stay | now=Hard | score=11 | streak C=1 W=0
+  [Q6] Q6: Hard | correct=True | result=promote | now=Secondary | score=16 | streak C=0 W=0
+  [Q7] Q7: Hard | correct=True | result=stay | now=Secondary | score=26 | streak C=1 W=0
+  [Q8] Q8: Hard | correct=True | result=stay | now=Secondary | score=36 | streak C=2 W=0
+  Expected: Secondary | Got: Secondary
+
+============================================================
+SCENARIO 5: Quiz limit (answer all 25)
+============================================================
+
+Created assessment: ef6bb277-1f99-4d06-b524-ed3c77b2b29c
+Session: 69c0786c-80f8-4db8-93d4-6e2dbc93de41 | Difficulty: Easy | Score: 0
+  [Q1] Q1: Easy | correct=True | result=stay | now=Easy | score=1 | streak C=1 W=0
+  [Q2] Q2: Easy | correct=True | result=promote | now=Medium | score=2 | streak C=0 W=0
+  [Q3] Q3: Medium | correct=True | result=stay | now=Medium | score=4 | streak C=1 W=0
+  [Q4] Q4: Medium | correct=True | result=promote | now=Hard | score=6 | streak C=0 W=0
+  [Q5] Q5: Hard | correct=True | result=stay | now=Hard | score=11 | streak C=1 W=0
+  [Q6] Q6: Hard | correct=True | result=promote | now=Secondary | score=16 | streak C=0 W=0
+  [Q7] Q7: Hard | correct=True | result=stay | now=Secondary | score=26 | streak C=1 W=0
+  [Q8] Q8: Hard | correct=True | result=stay | now=Secondary | score=36 | streak C=2 W=0
+  [Q9] Q9: Hard | correct=True | result=stay | now=Secondary | score=46 | streak C=3 W=0
+  [Q10] Q10: Hard | correct=True | result=stay | now=Secondary | score=56 | streak C=4 W=0
+  [Q11] Q11: Hard | correct=True | result=stay | now=Secondary | score=66 | streak C=5 W=0
+  [Q12] Q12: Hard | correct=True | result=stay | now=Secondary | score=74 | streak C=6 W=0
+  [Q13] Q13: Hard | correct=True | result=stay | now=Secondary | score=82 | streak C=7 W=0
+  [Q14] Q14: Hard | correct=True | result=stay | now=Secondary | score=90 | streak C=8 W=0
+  [Q15] Q15: Hard | correct=True | result=stay | now=Secondary | score=98 | streak C=9 W=0
+  [Q16] Q16: Hard | correct=True | result=stay | now=Secondary | score=106 | streak C=10 W=0
+  [Q17] Q17: Hard | correct=True | result=stay | now=Hard | score=111 | streak C=1 W=0
+  [Q18] Q18: Hard | correct=True | result=promote | now=Secondary | score=116 | streak C=0 W=0
+  [Q19] Q19: Hard | correct=True | result=stay | now=Hard | score=121 | streak C=1 W=0
+  [Q20] Q20: Hard | correct=True | result=promote | now=Secondary | score=124 | streak C=0 W=0
+  [Q21] Q21: Hard | correct=True | result=stay | now=Hard | score=127 | streak C=1 W=0
+  [Q22] Q22: Hard | correct=True | result=promote | now=Secondary | score=130 | streak C=0 W=0
+  [Q23] Q23: Hard | correct=True | result=stay | now=Hard | score=133 | streak C=1 W=0
+  [Q24] Q24: Hard | correct=True | result=promote | now=Secondary | score=136 | streak C=0 W=0
+  [Q25] Q25: Medium | correct=True | result=stay | now=Medium | score=138 | streak C=1 W=0
+  Stopped at Q25 — limit reached correctly
+
+============================================================
+SCENARIO 6: Pool exhaustion — force Medium, exhaust it, expect fallback to Easy
+============================================================
+
+Created assessment: 0983c284-3fbc-4942-8b96-9d88b5724f27
+Session: eaad22fe-6d65-4fa8-bc8c-9d81404bcc2d | Difficulty: Easy | Score: 0
+  [Q1] Q1: Medium | correct=False | result=stay | now=Medium | score=0 | streak C=0 W=1
+  [Q2] Q2: Medium | correct=False | result=demote | now=Easy | score=-1 | streak C=0 W=0
+  [Q3] Q3: Easy | correct=False | result=stay | now=Easy | score=-1 | streak C=0 W=1
+  [Q4] Q4: Easy | correct=False | result=stay | now=Easy | score=-1 | streak C=0 W=2
+  [Q5] Q5: Easy | correct=False | result=stay | now=Easy | score=-1 | streak C=0 W=3
+  [Q6] Q6: Easy | correct=False | result=stay | now=Easy | score=-1 | streak C=0 W=4
+  [Q7] Q7: Easy | correct=False | result=stay | now=Easy | score=-1 | streak C=0 W=5
+  [Q8] Q8: Easy | correct=False | result=stay | now=Easy | score=-2 | streak C=0 W=6
+  [Q9] Q9: Easy | correct=False | result=stay | now=Easy | score=-3 | streak C=0 W=7
+  [Q10] Q10: Easy | correct=False | result=stay | now=Easy | score=-4 | streak C=0 W=8
+  Final difficulty: Easy | Active: True
+
+============================================================
+SCENARIO 7: Score tracking
+============================================================
+
+Created assessment: 4f7e397e-40ec-44ff-8502-f5be3de586a4
+Session: 2ca98d36-a909-403a-8f25-8b0269c69d81 | Difficulty: Easy | Score: 0
+  [+1 easy] Q1: Easy | correct=True | result=stay | now=Easy | score=1 | streak C=1 W=0
+  [+1 easy → promote] Q2: Easy | correct=True | result=promote | now=Medium | score=2 | streak C=0 W=0
+  [wrong medium] Q3: Medium | correct=False | result=stay | now=Medium | score=2 | streak C=0 W=1
+  [wrong medium → demote -1] Q4: Medium | correct=False | result=demote | now=Easy | score=1 | streak C=0 W=0
+  Expected score: +1+1-1 = 1 | Got: 1
+
+============================================================
+ALL SHELL TESTS COMPLETE
+============================================================

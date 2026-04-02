@@ -1,0 +1,178 @@
+<!--&lt;!&ndash; quiz_complete.html &ndash;&gt;-->
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--  <meta charset="UTF-8">-->
+<!--  <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--  <title>Quiz Complete</title>-->
+<!--  <style>-->
+<!--    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }-->
+<!--    body {-->
+<!--      font-family: system-ui, -apple-system, sans-serif;-->
+<!--      background: #f4f5f7;-->
+<!--      min-height: 100vh;-->
+<!--      display: flex;-->
+<!--      align-items: center;-->
+<!--      justify-content: center;-->
+<!--      padding: 24px 16px;-->
+<!--    }-->
+<!--    .card {-->
+<!--      background: #fff;-->
+<!--      border-radius: 20px;-->
+<!--      padding: 48px 40px;-->
+<!--      max-width: 480px;-->
+<!--      width: 100%;-->
+<!--      text-align: center;-->
+<!--      box-shadow: 0 4px 24px rgba(0,0,0,0.08);-->
+<!--    }-->
+<!--    .icon { font-size: 52px; margin-bottom: 16px; }-->
+<!--    h1 { font-size: 26px; font-weight: 700; color: #111827; margin-bottom: 8px; }-->
+<!--    .subtitle { color: #6b7280; font-size: 15px; margin-bottom: 32px; }-->
+<!--    .score-box {-->
+<!--      background: #f5f3ff;-->
+<!--      border-radius: 12px;-->
+<!--      padding: 20px;-->
+<!--      margin-bottom: 24px;-->
+<!--    }-->
+<!--    .score-label { font-size: 13px; color: #7c3aed; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }-->
+<!--    .score-value { font-size: 42px; font-weight: 800; color: #4c1d95; margin: 6px 0 2px; }-->
+<!--    .score-sub { font-size: 13px; color: #8b5cf6; }-->
+<!--    .reason-badge {-->
+<!--      display: inline-block;-->
+<!--      padding: 4px 12px;-->
+<!--      border-radius: 99px;-->
+<!--      font-size: 13px;-->
+<!--      font-weight: 600;-->
+<!--      background: #fee2e2;-->
+<!--      color: #991b1b;-->
+<!--      margin-bottom: 20px;-->
+<!--    }-->
+<!--    .meta { font-size: 13px; color: #9ca3af; }-->
+<!--  </style>-->
+<!--</head>-->
+<!--<body>-->
+<!--<div class="card">-->
+<!--  {% if reason == 'time_up' %}-->
+<!--    <div class="icon">⏰</div>-->
+<!--    <h1>Time's up!</h1>-->
+<!--    <p class="subtitle">Your test has ended because the time limit was reached.</p>-->
+<!--    <div class="reason-badge">Time Limit Reached</div>-->
+<!--  {% elif reason == 'terminated' %}-->
+<!--    <div class="icon">🚫</div>-->
+<!--    <h1>Test Ended Early</h1>-->
+<!--    <p class="subtitle">You've exhausted the available question buffer.</p>-->
+<!--    <div class="reason-badge">Buffer Exhausted</div>-->
+<!--  {% else %}-->
+<!--    <div class="icon"></div>-->
+<!--    <h1>Quiz Complete!</h1>-->
+<!--    <p class="subtitle">You've answered all the questions. Great job!</p>-->
+<!--  {% endif %}-->
+
+<!--  <div class="score-box">-->
+<!--    <div class="score-label">Final Score</div>-->
+<!--    <div class="score-value">-->
+<!--      {% if assessment.final_score is not None %}-->
+<!--        {{ assessment.final_score }}%-->
+<!--      {% else %}-->
+<!--        —-->
+<!--      {% endif %}-->
+<!--    </div>-->
+<!--    <div class="score-sub">{{ assessment.candidate.name }}</div>-->
+<!--  </div>-->
+
+<!--  <p class="meta">{{ assessment.quiz.title }}</p>-->
+<!--</div>-->
+<!--</body>-->
+<!--</html>-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assessment Submitted</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f4f5f7;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 56px 40px;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+    .success-check {
+      width: 80px;
+      height: 80px;
+      background: #ecfdf5;
+      color: #10b981;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin: 0 auto 24px;
+    }
+    h1 { font-size: 28px; font-weight: 700; color: #111827; margin-bottom: 12px; }
+    .subtitle { color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 32px; }
+
+    .status-box {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .hr-message {
+      font-size: 15px;
+      color: #374151;
+      font-weight: 500;
+    }
+    .hr-message span {
+      display: block;
+      margin-top: 8px;
+      color: #6b7280;
+      font-weight: 400;
+      font-size: 14px;
+    }
+
+    .divider { height: 1px; background: #e5e7eb; margin: 24px 0; }
+    .meta { font-size: 13px; color: #9ca3af; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="success-check">✓</div>
+
+  {% if reason == 'time_up' %}
+    <h1>Time limit reached</h1>
+  {% else %}
+    <h1>Test Submitted Successfully</h1>
+  {% endif %}
+
+  <p class="subtitle">
+    Thank you for completing the assessment for the <strong>{{ assessment.quiz.title }}</strong> role. Your responses have been recorded.
+  </p>
+
+  <div class="status-box">
+    <p class="hr-message">
+      What happens next?
+      <span>Our HR team will review your performance and adaptive metrics. We will get back to you soon if everything goes well!</span>
+    </p>
+  </div>
+
+  <div class="divider"></div>
+
+  <p class="meta">Candidate ID: {{ assessment.candidate.name|truncatechars:20 }}</p>
+</div>
+</body>
+</html>

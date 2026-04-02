@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px; font-family: 'Inter', system-ui, sans-serif;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <div>
+            <a href="{% url 'quiz_list' %}" style="text-decoration: none; color: #6366f1; font-weight: 500;">← Back to Templates</a>
+            <h1 style="margin-top: 10px; color: #1e293b;">
+                {% if is_finalized %}Locked Pool:{% else %}Previewing:{% endif %} {{ quiz.title }}
+            </h1>
+            <p style="margin: 5px 0; color: #64748b; font-size: 0.9rem;">
+                <strong>Primary JDs:</strong> {% for l in quiz.primary_job_levels.all %}{{ l.job.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </p>
+        </div>
+
+        {% if not is_finalized %}
+        <button onclick="window.location.reload();" class="btn" style="background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+            🔄 Shuffle Random Preview
+        </button>
+        {% endif %}
+    </div>
+
+    {% if not is_finalized %}
+        <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:12px; padding:20px; margin-bottom:30px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="color: #9a3412;">
+                <strong style="display: block; font-size: 1.1rem;">🏗️ Simulated Selection</strong>
+                <span style="font-size: 0.9rem;">These questions are sampled based on your counts. Click Finalize to lock this exact set for candidates.</span>
+            </div>
+            <form method="POST" action="{% url 'finalize_quiz_questions' quiz.id %}" onsubmit="return confirm('Lock this specific set of questions? No further changes allowed.')">
+                {% csrf_token %}
+                <button type="submit" style="background:#4f46e5; color:#fff; padding:12px 28px; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition: transform 0.2s;">
+                    🔒 Finalize Question Set
+                </button>
+            </form>
+        </div>
+    {% else %}
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:20px; margin-bottom:30px; color: #166534;">
+            <strong style="display: block; font-size: 1.1rem;">✅ Finalized & Active</strong>
+            <span style="font-size: 0.9rem;">This set is locked. Every candidate assigned this template will draw from this specific pool.</span>
+        </div>
+    {% endif %}
+
+    <div style="background: #f8faff; border: 1px solid #e0e7ff; border-radius: 20px; padding: 30px; margin-bottom: 50px;">
+        <h2 style="margin-top: 0; color: #4338ca; border-bottom: 2px solid #e0e7ff; padding-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
+            Phase 1: Primary Adaptive Pool
+            <span style="font-size: 0.8rem; background: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 20px;">6-Set Pathing</span>
+        </h2>
+
+        {% for diff, data in simulated_primary.items %}
+        <div style="margin-top: 30px;">
+            <h3 style="color: #4f46e5; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
+                {{ diff }} Difficulty
+                <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">({{ data.req }} Qs + {{ data.req }} Buffers)</span>
+            </h3>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 15px;">
+                <div>
+                    {% for q in data.primary %}
+                        <div style="background: white; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
+                            <p style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 600; color: #1e293b;">{{ forloop.counter }}. {{ q.question_prompt }}</p>
+                            <div style="display: grid; gap: 4px;">
+                                {% for opt in q.options.all %}
+                                <div style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; {% if opt.is_correct %} background: #f0fdf4; color: #166534; {% else %} color: #64748b; {% endif %}">
+                                    {% if opt.is_correct %}✅{% else %}⚪{% endif %} {{ opt.option_text }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+               <div>
+    {% for q in data.buffer %}
+        <div style="background: #fcfcfc; padding: 15px; border-radius: 10px; border: 1px dashed #cbd5e1; margin-bottom: 12px;">
+            <p style="margin: 0 0 10px 0; font-size: 0.9rem; color: #64748b; font-style: italic;">
+                B{{ forloop.counter }}. {{ q.question_prompt }}
+            </p>
+
+            <div style="display: grid; gap: 4px;">
+                {% for opt in q.options.all %}
+                <div style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px;
+                    {% if opt.is_correct %}
+                        background: #f0fdf4; border: 1px dashed #bbf7d0; color: #166534;
+                    {% else %}
+                        color: #94a3b8;
+                    {% endif %}">
+                    {% if opt.is_correct %}✅{% else %}⚪{% endif %} {{ opt.option_text }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div style="background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 20px; padding: 30px; margin-bottom: 40px;">
+        <h2 style="margin-top: 0; color: #0891b2; border-bottom: 2px solid #ccfbf1; padding-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
+            Phase 2: Secondary Pool
+            <span style="font-size: 0.8rem; background: #ccfbf1; color: #0891b2; padding: 4px 12px; border-radius: 20px;">Final Exam Mirror</span>
+        </h2>
+
+        {% for diff, data in simulated_secondary.items %}
+            {% if data.primary %}
+            <div style="margin-top: 30px;">
+                <h3 style="color: #0d9488; font-size: 1.1rem;">{{ diff }} Secondary Questions</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 15px;">
+                    <div>
+                        {% for q in data.primary %}
+                            <div style="background: white; padding: 15px; border-radius: 10px; border: 1px solid #99f6e4; margin-bottom: 12px;">
+                                <p style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 600; color: #134e4a;">{{ forloop.counter }}. {{ q.question_prompt }}</p>
+                                <div style="display: grid; gap: 4px;">
+                                    {% for opt in q.options.all %}
+                                    <div style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; {% if opt.is_correct %} background: #f0fdf4; color: #166534; {% else %} color: #64748b; {% endif %}">
+                                        {% if opt.is_correct %}✅{% else %}⚪{% endif %} {{ opt.option_text }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div>
+    {% for q in data.buffer %}
+        <div style="background: #fcfcfc; padding: 15px; border-radius: 10px; border: 1px dashed #cbd5e1; margin-bottom: 12px;">
+            <p style="margin: 0 0 10px 0; font-size: 0.9rem; color: #64748b; font-style: italic;">
+                B{{ forloop.counter }}. {{ q.question_prompt }}
+            </p>
+
+            <div style="display: grid; gap: 4px;">
+                {% for opt in q.options.all %}
+                <div style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px;
+                    {% if opt.is_correct %}
+                        background: #f0fdf4; border: 1px dashed #bbf7d0; color: #166534;
+                    {% else %}
+                        color: #94a3b8;
+                    {% endif %}">
+                    {% if opt.is_correct %}✅{% else %}⚪{% endif %} {{ opt.option_text }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+</style>
+{% endblock %}

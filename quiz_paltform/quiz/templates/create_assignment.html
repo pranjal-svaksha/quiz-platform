@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 40px auto; padding: 30px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); font-family: 'Inter', system-ui, sans-serif;">
+
+    <div style="margin-bottom: 25px;">
+        <a href="{% url 'quiz_list' %}" style="text-decoration: none; color: #6366f1; font-size: 0.9rem;">← Back to List</a>
+    </div>
+
+    <h2 style="color: #1e293b; margin-top: 0;">Invite Candidate</h2>
+    <p style="color: #64748b; margin-bottom: 5px;">Quiz Template: <strong style="color: #1e293b;">{{ quiz.title }}</strong></p>
+
+    {% if not quiz.is_finalized %}
+    <div style="background: #fff7ed; border: 1px solid #ffedd5; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+        <p style="margin: 0; color: #9a3412; font-size: 0.9rem; line-height: 1.5;">
+            <strong>⚠️ Finalization Required:</strong> You cannot invite candidates until the question set is locked.
+            <a href="{% url 'view_quiz_questions' quiz.id %}" style="color: #c2410c; font-weight: 700; text-decoration: underline;">Finalize Questions Now →</a>
+        </p>
+    </div>
+    {% endif %}
+
+    <form method="POST" style="margin-top: 25px;">
+        {% csrf_token %}
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #334155;">Select Candidate</label>
+            <select name="existing_candidate_id" id="candidate_selector" onchange="toggleCandidateFields()"
+                   style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; background-color: white;">
+                <option value="new">+ Create New Candidate</option>
+                {% for candidate in candidates %}
+                    <option value="{{ candidate.id }}">{{ candidate.name }} ({{ candidate.email }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div id="new_candidate_section">
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #334155;">Full Name</label>
+                <input type="text" name="candidate_name" id="id_name" placeholder="Jane Doe"
+                       style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #334155;">Email Address</label>
+                <input type="email" name="candidate_email" id="id_email" placeholder="jane@company.com"
+                       style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
+            </div>
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #334155;">Test Duration (Minutes)</label>
+            <input type="number" name="time_limit" value="30" min="5"
+                   style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box;">
+        </div>
+
+        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #e2e8f0;">
+            <p style="margin: 0; font-size: 0.85rem; color: #64748b; line-height: 1.4;">
+                <span style="display: block; font-weight: 700; color: #475569; margin-bottom: 4px;">Adaptive Rules Summary:</span>
+                {{ quiz.easy_count }} Easy, {{ quiz.medium_count }} Medium, {{ quiz.hard_count }} Hard, and {{ quiz.secondary_exam_count }} Boss Phase questions.
+            </p>
+        </div>
+
+        <button type="submit"
+            {% if not quiz.is_finalized %} disabled {% endif %}
+            style="width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: {% if quiz.is_finalized %}pointer{% else %}not-allowed{% endif %}; background: {% if quiz.is_finalized %}#4f46e5{% else %}#94a3b8{% endif %}; color: white; transition: all 0.2s;">
+            {% if quiz.is_finalized %}
+                🚀 Generate Invite Link
+            {% else %}
+                🔒 Finalize Quiz to Enable
+            {% endif %}
+        </button>
+    </form>
+</div>
+
+<script>
+function toggleCandidateFields() {
+    const selector = document.getElementById('candidate_selector');
+    const newSection = document.getElementById('new_candidate_section');
+    const nameInput = document.getElementById('id_name');
+    const emailInput = document.getElementById('id_email');
+
+    if (selector.value === 'new') {
+        newSection.style.display = 'block';
+        nameInput.required = true;
+        emailInput.required = true;
+    } else {
+        newSection.style.display = 'none';
+        nameInput.required = false;
+        emailInput.required = false;
+    }
+}
+
+// Run on load to set initial state
+window.onload = toggleCandidateFields;
+</script>
+{% endblock %}

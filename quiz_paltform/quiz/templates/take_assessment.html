@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ assessment.quiz.title }} — {{ assessment.candidate.name }}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f4f5f7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+      color: #1a1a2e;
+    }
+
+    /* ---- TOP BAR ---- */
+    .top-bar {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .quiz-title { font-size: 15px; font-weight: 600; color: #374151; }
+
+    .timer {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #374151;
+      transition: all 0.3s ease;
+    }
+
+    .timer.warning { color: #dc2626; border-color: #fca5a5; background: #fff5f5; animation: shake 0.5s; }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-2px); }
+      75% { transform: translateX(2px); }
+    }
+
+    /* ---- PROGRESS ---- */
+    .progress-wrap { width: 100%; max-width: 760px; margin-bottom: 20px; }
+    .progress-meta { display: flex; justify-content: space-between; font-size: 13px; color: #6b7280; margin-bottom: 6px; }
+    .progress-bar { height: 6px; background: #e5e7eb; border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 99px; transition: width 0.4s ease; }
+
+    /* ---- CARD ---- */
+    .card {
+      width: 100%;
+      max-width: 760px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px 36px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    .diff-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .diff-Easy { background: #d1fae5; color: #065f46; }
+    .diff-Medium { background: #fef3c7; color: #92400e; }
+    .diff-Hard { background: #fee2e2; color: #991b1b; }
+
+    .question-text { font-size: 18px; font-weight: 500; line-height: 1.6; color: #111827; margin-bottom: 28px; }
+
+    /* ---- OPTIONS ---- */
+    .options-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+
+    .option-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .option-label:hover { border-color: #6366f1; background: #f5f3ff; }
+    .option-label input { accent-color: #6366f1; width: 18px; height: 18px; }
+
+    /* CSS :has() handles the checked state styling */
+    .option-label:has(input:checked) { border-color: #6366f1; background: #eef2ff; }
+
+    .one-word-input {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 16px;
+      margin-bottom: 28px;
+      outline: none;
+    }
+    .one-word-input:focus { border-color: #6366f1; }
+
+    /* ---- ACTIONS ---- */
+    .actions { display: flex; justify-content: space-between; gap: 12px; }
+    .btn { padding: 12px 24px; border-radius: 8px; font-size: 15px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: #6366f1; color: #fff; }
+    .btn-primary:disabled { background: #c7d2fe; cursor: not-allowed; }
+    .btn-skip { background: transparent; color: #6b7280; border: 1.5px solid #d1d5db; }
+    /* Smoothly animate the width change */
+/* Container styling */
+.assessment-progress {
+    width: 100%;
+    max-width: 760px;
+    margin-bottom: 24px;
+}
+
+/* Header layout */
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 10px;
+}
+
+.q-count {
+    font-size: 14px;
+    color: #374151;
+}
+
+.pct-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6366f1;
+}
+
+/* Integrated Badges */
+.status-badge {
+    margin-left: 10px;
+    padding: 2px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.phase-main { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+.phase-sec { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+
+/* The Bar Logic */
+.progress-track {
+    height: 10px;
+    background: #e5e7eb;
+    border-radius: 99px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.progress-fill-gradient {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    border-radius: 99px;
+    transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); /* Adds a slight "bounce" */
+}
+.pct-label {
+    font-size: 24px;         /* Increased from 13px */
+    font-weight: 800;         /* Extra bold */
+    color: #4f46e5;           /* Slightly deeper indigo for contrast */
+    line-height: 1;           /* Prevents extra spacing */
+    letter-spacing: -0.5px;   /* Tighter look for large text */
+}
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="quiz-title">{{ assessment.quiz.title }}</div>
+  <div style="display: flex; gap: 15px; align-items: center;">
+    <div style="font-size: 13px; color: #6b7280;">Live Score: <strong>{{ current_score }}</strong></div>
+    <div class="timer" id="timer-display">
+      <span id="timer-text">--:--</span>
+    </div>
+  </div>
+</div>
+
+<div class="assessment-progress">
+    <div class="progress-header">
+        <div class="progress-info">
+            <span class="q-count">Question <strong>{{ q_number }}</strong> <small>of {{ total }}</small></span>
+            {% if current_phase == 'MAIN' %}
+                <span class="status-badge phase-main">📝 Main Exam</span>
+            {% else %}
+                <span class="status-badge phase-sec">🎯 Secondary Exam</span>
+            {% endif %}
+        </div>
+        <div class="pct-label">
+    <small style="font-size: 12px; font-weight: 500; color: #9ca3af; margin-right: 4px;">Progress:</small>
+    {{ progress_pct }}%
+</div>
+
+    </div>
+
+    <div class="progress-track">
+        <div class="progress-fill-gradient"
+             style="width: {{ progress_pct }}%"
+             role="progressbar"
+             aria-valuenow="{{ progress_pct }}"
+             aria-valuemin="0"
+             aria-valuemax="100">
+        </div>
+    </div>
+</div>
+
+
+
+
+<div class="card">
+  <span class="diff-badge diff-{{ question.difficulty }}">{{ question.difficulty }}</span>
+  <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px; font-weight: bold;">{{ question.type }}</div>
+  <div class="question-text">{{ question.question_prompt }}</div>
+
+  <form method="POST" action="/submit/{{ token }}/" id="answer-form">
+    {% csrf_token %}
+
+    {% if question.type == 'MCQ' %}
+    <div class="options-list">
+      {% for option in options %}
+      <label class="option-label">
+        <input type="radio" name="options" value="{{ option.id }}">
+        {{ option.option_text }}
+      </label>
+      {% endfor %}
+    </div>
+
+    {% elif question.type == 'MSQ' %}
+    <div class="options-list">
+      {% for option in options %}
+      <label class="option-label">
+        <input type="checkbox" name="options" value="{{ option.id }}">
+        {{ option.option_text }}
+      </label>
+      {% endfor %}
+    </div>
+
+    {% elif question.type == 'One-Word' %}
+    <input type="text" name="typed_answer" class="one-word-input" placeholder="Type answer here..." autocomplete="off">
+    {% endif %}
+
+    <div class="actions">
+      <button type="submit" name="skip" value="1" class="btn btn-skip" id="skip-btn">Skip Question</button>
+      <button type="submit" class="btn btn-primary" id="submit-btn">Next Question →</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // 1. Timer Logic
+  let remaining = parseInt("{{ time_remaining|default:0 }}");
+  const timerText = document.getElementById('timer-text');
+  const timerDisplay = document.getElementById('timer-display');
+  const form = document.getElementById('answer-form');
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  }
+
+  function tick() {
+    if (remaining <= 0) {
+      timerText.textContent = "0:00";
+      // Auto-submit as skip
+      const skipInput = document.createElement('input');
+      skipInput.type = 'hidden'; skipInput.name = 'skip'; skipInput.value = '1';
+      form.appendChild(skipInput);
+      form.submit();
+      return;
+    }
+
+    timerText.textContent = formatTime(remaining);
+    if (remaining <= 30) timerDisplay.classList.add('warning');
+    remaining--;
+    setTimeout(tick, 1000);
+  }
+  tick();
+
+  // 2. Form Validation & Double-Submit Protection
+  form.addEventListener('submit', function(e) {
+    // Determine if "Skip" was clicked
+    const skipClicked = e.submitter && e.submitter.name === 'skip';
+
+    if (!skipClicked) {
+      const qType = "{{ question.type }}";
+      let isValid = false;
+
+      if (qType === 'MCQ' || qType === 'MSQ') {
+        isValid = document.querySelectorAll('input[name="options"]:checked').length > 0;
+      } else if (qType === 'One-Word') {
+        isValid = document.querySelector('input[name="typed_answer"]').value.trim().length > 0;
+      }
+
+      if (!isValid) {
+        e.preventDefault();
+        alert("Please provide an answer or click 'Skip'.");
+        return;
+      }
+    } else {
+      if (!confirm("Skip this question? It will be marked as incorrect.")) {
+        e.preventDefault();
+        return;
+      }
+    }
+
+    // Disable buttons to prevent double click
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('skip-btn').disabled = true;
+  });
+</script>
+
+</body>
+</html>

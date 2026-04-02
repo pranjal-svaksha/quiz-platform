@@ -1,0 +1,126 @@
+            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ assessment.quiz.title }} - Assessment</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-top: 50px; }
+        .quiz-card { border: none; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); background: white; }
+        .option-container {
+            display: block; position: relative; padding: 15px 15px 15px 45px; margin-bottom: 12px;
+            cursor: pointer; border: 2px solid #e9ecef; border-radius: 10px; transition: 0.3s;
+        }
+        .option-container:hover { background-color: #f8f9fa; border-color: #4e73df; }
+        .option-container input { position: absolute; opacity: 0; cursor: pointer; }
+        .checkmark {
+            position: absolute; top: 18px; left: 15px; height: 20px; width: 20px;
+            background-color: #eee; border-radius: 50%; border: 2px solid #ddd;
+        }
+        .option-container input:checked ~ .checkmark { background-color: #4e73df; border-color: #4e73df; }
+        .difficulty-badge { font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        #timer-display { font-size: 2.5rem; font-weight: 700; color: #e74a3b; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div>
+                    <h5 class="text-secondary mb-1">Question {{ session.total_q_answered|add:1 }} of 25</h5>
+                    <span class="badge badge-pill p-2 px-3 difficulty-badge
+                        {% if session.current_difficulty == 'Hard' %}badge-danger
+                        {% elif session.current_difficulty == 'Medium' %}badge-warning text-dark
+                        {% else %}badge-success{% endif %}">
+                        Current Level: {{ session.current_difficulty }}
+                    </span>
+                </div>
+                <div class="text-right">
+                    <div id="timer-display">00:00</div>
+                    <small class="text-muted font-weight-bold">REMAINING TIME</small>
+                </div>
+            </div>
+
+            <div class="progress mb-4" style="height: 8px; border-radius: 10px;">
+                <div class="progress-bar bg-primary" role="progressbar"
+                     style="width: {% widthratio session.total_q_answered 25 100 %}%"></div>
+            </div>
+<div class="card quiz-card">
+<div class="card-body p-4">
+    <h4 class="mb-4 text-dark">{{ question.question_text }}</h4>
+
+    <form method="POST" id="quizForm">
+        {% csrf_token %}
+        <input type="hidden" name="question_id" value="{{ question.id }}">
+
+        <div class="options-container mb-5">
+
+            {% if question.question_type == 'MCQ' %}
+                {% for opt in question.options.all %}
+                <div class="custom-control custom-radio mb-3 p-3 border rounded shadow-sm">
+                    <input type="radio" id="opt{{ opt.id }}" name="options" value="{{ opt.id }}" class="custom-control-input" required>
+                    <label class="custom-control-label w-100 cursor-pointer" for="opt{{ opt.id }}">{{ opt.option_text }}</label>
+                </div>
+                {% endfor %}
+
+            {% elif question.question_type == 'MSQ' %}
+                <p class="text-muted small"><i class="fas fa-check-double"></i> Select all that apply</p>
+                {% for opt in question.options.all %}
+                <div class="custom-control custom-checkbox mb-3 p-3 border rounded shadow-sm">
+                    <input type="checkbox" id="opt{{ opt.id }}" name="options" value="{{ opt.id }}" class="custom-control-input">
+                    <label class="custom-control-label w-100 cursor-pointer" for="opt{{ opt.id }}">{{ opt.option_text }}</label>
+                </div>
+                {% endfor %}
+
+            {% elif question.question_type == 'Short Answer' or question.question_type == 'One-Word' %}
+                <div class="form-group">
+                    <label class="text-muted">Type your answer below:</label>
+                    <input type="text" name="short_answer" class="form-control form-control-lg border-primary" placeholder="Enter one word..." required autocomplete="off" autofocus>
+                </div>
+            {% endif %}
+
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <button type="submit" name="action" value="skip" class="btn btn-outline-secondary px-4" formnovalidate>
+                Skip Question
+            </button>
+            <button type="submit" name="action" value="next" class="btn btn-primary px-5 font-weight-bold">
+                Submit Answer
+            </button>
+        </div>
+    </form>
+</div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    let timeLeft = {{ time_left_seconds }};
+    const timerDisplay = document.getElementById('timer-display');
+
+    const countdown = setInterval(() => {
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            // If time is up, refresh the page.
+            // The Backend view will see elapsed_time > limit and redirect to Finished.
+            window.location.reload();
+        } else {
+            timeLeft--;
+            let mins = Math.floor(timeLeft / 60);
+            let secs = timeLeft % 60;
+            timerDisplay.innerHTML = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+            // Visual warning for last 60 seconds
+            if (timeLeft < 60) timerDisplay.classList.add('text-danger', 'blink');
+        }
+    }, 1000);
+</script>
+</body>
+</html>

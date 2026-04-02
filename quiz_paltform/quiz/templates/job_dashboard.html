@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h1>Technology Folders</h1>
+
+    <form method="POST" style="display: flex; gap: 10px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        {% csrf_token %}
+        <input type="text" name="name" placeholder="New Technology (e.g. React)" required
+               style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; width: 250px;">
+        <button type="submit" class="btn">Create Folder</button>
+    </form>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+    {% for job in jobs %}
+    <div class="card" style="position: relative; transition: transform 0.2s;">
+        <h2 style="margin-top: 0; color: var(--primary);">{{ job.name }}</h2>
+        <p style="color: #64748b;">{{ job.levels.count }} Seniority Levels / JDs saved.</p>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <a href="{% url 'job_detail' job.id %}" class="btn" style="flex: 1; text-align: center;">Manage Levels</a>
+            <form action="{% url 'delete_job' job.id %}" method="POST" onsubmit="return confirm('Delete this entire Technology and all its JDs?')">
+                {% csrf_token %}
+                <button type="submit" style="background: #fee2e2; color: #dc2626; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% empty %}
+    <p style="color: #64748b;">No technology folders created yet. Start by adding one above!</p>
+    {% endfor %}
+</div>
+{% endblock %}

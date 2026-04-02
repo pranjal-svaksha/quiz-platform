@@ -1,0 +1,443 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    :root {
+        --bg-main: #f8fafc;
+        --card-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+        --accent-indigo: #6366f1;
+        --accent-indigo-soft: #e0e7ff;
+        --success-emerald: #10b981;
+        --success-emerald-soft: #d1fae5;
+        --danger-rose: #f43f5e;
+        --danger-rose-soft: #ffe4e6;
+        --warning-amber: #f59e0b;
+        --warning-amber-soft: #fef3c7;
+        --slate-800: #1e293b;
+        --slate-500: #64748b;
+    }
+
+    body { background-color: var(--bg-main); font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+
+    /* Back Button */
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--slate-500);
+        font-weight: 600;
+        transition: color 0.2s ease;
+    }
+    .btn-back:hover { color: var(--accent-indigo); }
+
+    /* Hero Section */
+    .report-hero {
+        background: linear-gradient(135deg, var(--slate-800) 0%, #0f172a 100%);
+        border-radius: 16px;
+        padding: 2rem 2.5rem;
+        color: white;
+        box-shadow: var(--card-shadow);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Decorative background pattern for hero */
+    .report-hero::after {
+        content: '';
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        background-image: radial-gradient(circle at 100% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    .avatar-circle {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, var(--accent-indigo), #818cf8);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        border: 3px solid rgba(255,255,255,0.1);
+    }
+
+    .report-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-bottom: 0.25rem;
+        letter-spacing: -0.02em;
+    }
+
+    .candidate-meta {
+        color: #94a3b8;
+        font-size: 0.95rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .candidate-meta .name { color: #f8fafc; font-weight: 500; }
+
+    .timestamp-box {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 0.75rem 1.25rem;
+        border-radius: 12px;
+        display: inline-block;
+        backdrop-filter: blur(4px);
+    }
+
+    .timestamp-box .label {
+        display: block;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .timestamp-box .date {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    /* Summary Dashboard Cards */
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid #f1f5f9;
+        height: 100%;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .stat-card:hover {
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05);
+        transform: translateY(-2px);
+    }
+
+    .card-header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .exam-type {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .icon-box {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .bg-primary-soft { background: var(--accent-indigo-soft); color: var(--accent-indigo); }
+    .bg-success-soft { background: var(--success-emerald-soft); color: var(--success-emerald); }
+
+    .score-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.85rem;
+        border-radius: 99px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .score-pill.bg-primary { background: var(--accent-indigo) !important; }
+    .score-pill.bg-success { background: var(--success-emerald) !important; }
+
+    /* Score Breakdown & Progress */
+    .score-breakdown {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-mini-pill {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0.75rem 0.5rem;
+        border-radius: 10px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        text-align: center;
+    }
+
+    .stat-mini-pill strong { font-size: 1.25rem; line-height: 1.2; color: var(--slate-800); }
+    .stat-mini-pill .lbl { font-size: 0.75rem; color: var(--slate-500); font-weight: 600; text-transform: uppercase; margin-top: 0.25rem; }
+
+    .stat-mini-pill.is-success .icon { color: var(--success-emerald); font-weight: bold; margin-bottom: 0.25rem;}
+    .stat-mini-pill.is-danger .icon { color: var(--danger-rose); font-weight: bold; margin-bottom: 0.25rem;}
+    .stat-mini-pill.is-warning .icon { color: var(--warning-amber); font-weight: bold; margin-bottom: 0.25rem;}
+
+    .progress-track-mini {
+        height: 8px;
+        background: #f1f5f9;
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 99px;
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .score-summary-text {
+        font-size: 1.25rem;
+        color: var(--slate-800);
+        margin-bottom: 1.25rem;
+    }
+
+    /* Locked State */
+    .locked-state {
+        background: repeating-linear-gradient(45deg, #f8fafc, #f8fafc 10px, #f1f5f9 10px, #f1f5f9 20px);
+        border: 2px dashed #cbd5e1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .locked-overlay .icon-lock {
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+        opacity: 0.6;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
+    }
+
+    /* Existing Timeline Styles Below */
+    .timeline-item { background: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--card-shadow); border-left: 6px solid #cbd5e1; position: relative; }
+    .timeline-item.is-correct { border-left-color: var(--success-emerald); }
+    .timeline-item.is-wrong { border-left-color: var(--danger-rose); }
+    .timeline-item.is-skipped { border-left-color: var(--warning-amber); }
+    .q-metadata { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-size: 0.85rem; font-weight: 600; color: #64748b; }
+    .question-prompt { font-size: 1.1rem; font-weight: 500; color: #1e293b; margin-bottom: 1.25rem; line-height: 1.6; }
+    .answer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .answer-box { padding: 1rem; border-radius: 8px; font-size: 0.95rem; }
+    .box-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; font-weight: 700; }
+    .user-ans { background: #f1f5f9; color: #475569; }
+    .correct-ans { background: #ecfdf5; color: #065f46; font-weight: 600; }
+    .system-logic { background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 0.75rem; border-radius: 8px; font-size: 0.85rem; margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .phase-divider { text-align: center; margin: 3rem 0; position: relative; }
+    .phase-divider::before { content: ""; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #e2e8f0; z-index: 1; }
+    .phase-label { position: relative; z-index: 2; background: #1e293b; color: white; padding: 0.5rem 1.5rem; border-radius: 99px; font-weight: 700; font-size: 0.9rem; }
+</style>
+
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="{% url 'assignment_list' %}" class="text-decoration-none btn-back">
+            <i class="bi bi-arrow-left"></i> ← Back to Assignments
+        </a>
+    </div>
+
+    <div class="report-hero mb-5">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center gap-4">
+                        <h1 class="report-title">Assessment Report</h1>
+                        <p class="candidate-meta">
+                            <span class="name">{{ assessment.candidate.name }}</span>
+                            <span class="separator">•</span>
+                            <span class="quiz">{{ assessment.quiz.title }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end mt-4 mt-md-0">
+                <div class="timestamp-box">
+                    <span class="label">Completed On</span>
+                    <span class="date">{{ assessment.started_at|date:"d M Y" }}</span>
+                </div>
+            </div>
+         <div>
+    Final Score: <strong>
+        {% if secondary_score %}
+            {{ main_score|add:secondary_score }}
+        {% else %}
+            {{ main_score }}
+        {% endif %}
+    </strong>
+</div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-lg-6">
+            <div class="stat-card main-exam-card">
+                <div class="card-header-flex">
+                    <div class="exam-type">
+                        <div class="icon-box bg-primary-soft">📝</div>
+                        <span class="text-uppercase fw-bold text-muted small">Main Exam</span>
+                    </div>
+                    <div class="score-pill bg-primary">{{ main_score }}Marks</div>
+                </div>
+
+                <div class="card-body-content">
+                    <div class="score-breakdown">
+                        <div class="stat-mini-pill is-success">
+                            <span class="icon">✓</span>
+                            <strong>{{ main_correct }}</strong>
+                            <span class="lbl">Correct</span>
+                        </div>
+                        <div class="stat-mini-pill is-danger">
+                            <span class="icon">✕</span>
+                            <strong>{{ main_wrong }}</strong>
+                            <span class="lbl">Wrong</span>
+                        </div>
+                        <div class="stat-mini-pill is-warning">
+                            <span class="icon">⊘</span>
+                            <strong>{{ main_skipped }}</strong>
+                            <span class="lbl">Skipped</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            {% if attempted_secondary %}
+                <div class="stat-card secondary-exam-card">
+                    <div class="card-header-flex">
+                        <div class="exam-type">
+                            <div class="icon-box bg-success-soft">🎯</div>
+                            <span class="text-uppercase fw-bold text-muted small">Secondary Exam</span>
+                        </div>
+                        <div class="score-pill bg-success">{{ secondary_score}}Marks</div>
+                    </div>
+                    <div class="card-body-content">
+                         <div class="score-breakdown">
+                        <div class="stat-mini-pill is-success">
+                            <span class="icon">✓</span>
+                            <strong>{{ secondary_correct }}</strong>
+                            <span class="lbl">Correct</span>
+                        </div>
+                        <div class="stat-mini-pill is-danger">
+                            <span class="icon">✕</span>
+                            <strong>{{ secondary_wrong }}</strong>
+                            <span class="lbl">Wrong</span>
+                        </div>
+                        <div class="stat-mini-pill is-warning">
+                            <span class="icon">⊘</span>
+                            <strong>{{ secondary_skipped }}</strong>
+                            <span class="lbl">Skipped</span>
+                        </div>
+                    </div>
+
+
+                    </div>
+
+                </div>
+            {% else %}
+                <div class="stat-card locked-state">
+                    <div class="locked-overlay">
+                        {% if qualified_for_secondary %}
+                            <div class="icon-lock">🔓</div>
+                            <p class="mb-0 fw-bold text-dark">Qualified but not attempted</p>
+                            <small class="text-muted mt-2 d-block">User didn't start this phase.</small>
+                        {% else %}
+                            <div class="icon-lock">🔒</div>
+                            <p class="mb-0 fw-bold text-dark">Secondary Exam Locked</p>
+                            <small class="text-muted mt-2 d-block">Required: {{ secondary_unlock_threshold }}% in Main Exam</small>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <h3 class="fw-bold mb-4" style="color: var(--slate-800);">Detailed Breakdown</h3>
+
+
+    {% for resp in responses %}
+        {% if resp.serial == secondary_exam_started_at_index %}
+        <div class="phase-divider">
+            <span class="phase-label">🎯 SECONDARY EXAM BEGINS</span>
+        </div>
+        {% endif %}
+
+        <div class="timeline-item {% if resp.is_correct %}is-correct{% elif resp.is_skipped %}is-wrong{% else %}is-wrong{% endif %} {% if resp.is_skipped %}is-skipped{% endif %}">
+
+            <div class="q-metadata">
+                <div>
+                    <span class="text-dark">#{{ resp.serial }}</span>
+                    <span class="mx-2 text-slate-300">|</span>
+                    <span class="badge bg-light text-dark border">{{ resp.difficulty }}</span>
+                    {% if resp.is_buffer %}<span class="badge bg-dark ms-1">BUFFER</span>{% endif %}
+                </div>
+                <div>
+                    {% if resp.is_correct %}
+                        <span class="text-success">✓ Correct</span>
+                    {% elif resp.is_skipped %}
+                        <span class="text-warning">⊘ Skipped</span>
+                    {% else %}
+                        <span class="text-danger">✗ Incorrect</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="question-prompt">
+                {{ resp.question.question_prompt }}
+            </div>
+
+            <div class="answer-grid">
+                <div class="answer-box user-ans">
+                    <span class="box-label">Your Answer</span>
+                    {{ resp.candidate_answer|default:"—" }}
+                </div>
+                <div class="answer-box correct-ans">
+                    <span class="box-label">Correct Answer</span>
+                    {{ resp.correct_answer }}
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                <div class="d-flex gap-2">
+                    {% if resp.marks_awarded > 0 %}
+                        <span class="score-pill bg-success text-white">+{{ resp.marks_awarded }} Marks</span>
+                    {% endif %}
+                    {% if resp.buffer_penalty < 0 %}
+                        <span class="score-pill bg-danger text-white">{{ resp.buffer_penalty }} Buffer Penalty</span>
+                    {% endif %}
+                    {% if resp.demotion_penalty < 0 %}
+                        <span class="score-pill bg-danger text-white">{{ resp.demotion_penalty }} Demotion Penalty</span>
+                    {% endif %}
+                </div>
+                <div class="fw-bold text-slate-600">
+                    Running Score: {{ resp.running_score }}
+                </div>
+            </div>
+
+            {% if resp.promotion_demotion %}
+            <div class="system-logic">
+                <span>💡</span>
+                <em>{{ resp.promotion_demotion }}</em>
+            </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

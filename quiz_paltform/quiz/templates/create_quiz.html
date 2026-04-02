@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+    <a href="{% url 'quiz_list' %}" style="text-decoration: none; color: #6366f1; font-weight: 500;">← Back to Quizzes</a>
+    <h1 style="margin-top: 15px; color: #1e293b;">Create Adaptive Quiz Template</h1>
+    <p style="color: #64748b; margin-bottom: 30px;">Set your quotas. The system will automatically reserve a 1:1 unique buffer for every question.</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div style="padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #fee2e2; background-color: #fef2f2; color: #b91c1c; font-weight: 500;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST" class="card" style="background: white; padding: 30px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+        {% csrf_token %}
+
+        <div style="margin-bottom: 30px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Quiz Title</label>
+            <input type="text" name="title" placeholder="e.g., Python Backend Dev Assessment" required
+                   style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px;">
+    <div>
+        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #4f46e5;">Primary Job Levels</label>
+        <select name="primary_levels" multiple required
+                style="width: 100%; height: 150px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: white;">
+            {% for level in levels %}
+            <option value="{{ level.id }}">{{ level.job.name }} - {{ level.level_name }}</option>
+            {% endfor %}
+        </select>
+        <p style="font-size: 11px; color: #64748b; margin-top: 5px;">Hold Ctrl (Win) or Cmd (Mac) to select multiple.</p>
+    </div>
+
+    <div>
+        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #0891b2;">Secondary Job Levels</label>
+        <select name="secondary_levels" multiple
+                style="width: 100%; height: 150px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: white;">
+            {% for level in levels %}
+            <option value="{{ level.id }}">{{ level.job.name }} - {{ level.level_name }}</option>
+            {% endfor %}
+        </select>
+        <p style="font-size: 11px; color: #64748b; margin-top: 5px;">Leave empty to reuse Primary levels for the Boss Phase.</p>
+    </div>
+</div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px;">
+
+            <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <h3 style="margin-top: 0; font-size: 15px; margin-bottom: 15px; color: #4f46e5;">Phase 1: Primary Quotas</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="quota-group">
+                        <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Easy</label>
+                        <input type="number" name="easy_count" value="5" min="0" oninput="updateMirror(this)"
+                               style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <small style="color: #6366f1; font-size: 11px;">Req: <span class="mirror-val">10</span></small>
+                    </div>
+                    <div class="quota-group">
+                        <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Medium</label>
+                        <input type="number" name="medium_count" value="10" min="0" oninput="updateMirror(this)"
+                               style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <small style="color: #6366f1; font-size: 11px;">Req: <span class="mirror-val">20</span></small>
+                    </div>
+                    <div class="quota-group">
+                        <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Hard</label>
+                        <input type="number" name="hard_count" value="5" min="0" oninput="updateMirror(this)"
+                               style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <small style="color: #6366f1; font-size: 11px;">Req: <span class="mirror-val">10</span></small>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: #f0fdfa; padding: 20px; border-radius: 12px; border: 1px solid #ccfbf1;">
+                <h3 style="margin-top: 0; font-size: 15px; margin-bottom: 15px; color: #0891b2;">Phase 2: Boss Phase Quotas</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="quota-group">
+                        <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Easy</label>
+                        <input type="number" name="sec_easy_count" value="0" min="0" oninput="updateMirror(this)"
+                               style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <small style="color: #0891b2; font-size: 11px;">Req: <span class="mirror-val">0</span></small>
+                    </div>
+                    <div class="quota-group">
+                        <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Medium</label>
+                        <input type="number" name="sec_medium_count" value="0" min="0" oninput="updateMirror(this)"
+                               style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <small style="color: #0891b2; font-size: 11px;">Req: <span class="mirror-val">0</span></small>
+                    </div>
+                    <div class="quota-group">
+                        <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Hard</label>
+                        <input type="number" name="sec_hard_count" value="5" min="0" oninput="updateMirror(this)"
+                               style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        <small style="color: #0891b2; font-size: 11px;">Req: <span class="mirror-val">10</span></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p style="font-size: 12px; color: #64748b; line-height: 1.5; background: #f1f5f9; padding: 12px; border-radius: 6px; margin-bottom: 30px;">
+            <strong>The Mirror Rule:</strong> For every question you select, the system reserves a second unique question as a "buffer" to ensure the candidate never sees the same question twice during level drops or streaks.
+        </p>
+
+        <button type="submit" style="width: 100%; background: #4f46e5; color: white; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s;">
+            Create Template with Mirrors
+        </button>
+    </form>
+</div>
+
+<script>
+    function updateMirror(input) {
+        const val = input.value;
+        const mirrorSpan = input.parentElement.querySelector('.mirror-val');
+        if (val && val >= 0) {
+            mirrorSpan.innerText = val * 2;
+        } else {
+            mirrorSpan.innerText = 0;
+        }
+    }
+</script>
+
+<style>
+    button:hover { background: #4338ca !important; }
+    input:focus, select:focus { outline: 2px solid #c7d2fe; border-color: #6366f1 !important; }
+    .quota-group small { display: block; margin-top: 5px; font-weight: 600; }
+</style>
+{% endblock %}
