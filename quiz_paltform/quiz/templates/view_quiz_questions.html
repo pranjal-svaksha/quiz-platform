@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div style="max-width: 1200px; margin: 0 auto; padding: 20px; font-family: 'Inter', system-ui, sans-serif;">
+<div style="max-width: 1400px; margin: 0 auto; padding: 20px; font-family: 'Inter', system-ui, sans-serif;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
         <div>
             <a href="{% url 'quiz_list' %}" style="text-decoration: none; color: #6366f1; font-weight: 500;">← Back to Templates</a>
             <h1 style="margin-top: 10px; color: #1e293b;">
-                {% if is_finalized %}Locked Pool:{% else %}Previewing:{% endif %} {{ quiz.title }}
+                    {% if is_finalized %}Locked Pool:{% else %}Previewing:{% endif %} {{ quiz.title }}
             </h1>
             <p style="margin: 5px 0; color: #64748b; font-size: 0.9rem;">
                 <strong>Primary JDs:</strong> {% for l in quiz.primary_job_levels.all %}{{ l.job.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
@@ -14,25 +14,38 @@
         </div>
 
         {% if not is_finalized %}
-        <button onclick="window.location.reload();" class="btn" style="background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-            🔄 Shuffle Random Preview
-        </button>
+        <div style="display: flex; gap: 12px;">
+            <button onclick="saveSelections()" class="btn-save" style="background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                💾 Save Selections
+            </button>
+            <form method="POST" action="{% url 'clear_quiz_selections' quiz.id %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-clear" style="background: #f59e0b; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    🔄 Reset to Defaults
+                </button>
+            </form>
+        </div>
         {% endif %}
     </div>
 
     {% if not is_finalized %}
-        <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:12px; padding:20px; margin-bottom:30px; display: flex; justify-content: space-between; align-items: center;">
-            <div style="color: #9a3412;">
-                <strong style="display: block; font-size: 1.1rem;">🏗️ Simulated Selection</strong>
-                <span style="font-size: 0.9rem;">These questions are sampled based on your counts. Click Finalize to lock this exact set for candidates.</span>
+        <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:12px; padding:20px; margin-bottom:30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="color: #9a3412;">
+                    <strong style="display: block; font-size: 1.1rem;">🎯 Manual Question Selection</strong>
+                    <span style="font-size: 0.9rem;">Check questions to select them as Primary or Buffer. Save your selections before finalizing.</span>
+                    <div id="selection-status" style="margin-top: 10px; font-weight: 600; color: #ea580c;"></div>
+                </div>
+                <form method="POST" action="{% url 'finalize_quiz_questions' quiz.id %}" onsubmit="return confirmFinalize()">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-finalize" style="background:#4f46e5; color:#fff; padding:12px 28px; border:none; border-radius:8px; font-weight:600; cursor:pointer;">
+                        🔒 Finalize Question Set
+                    </button>
+                </form>
             </div>
-            <form method="POST" action="{% url 'finalize_quiz_questions' quiz.id %}" onsubmit="return confirm('Lock this specific set of questions? No further changes allowed.')">
-                {% csrf_token %}
-                <button type="submit" style="background:#4f46e5; color:#fff; padding:12px 28px; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition: transform 0.2s;">
-                    🔒 Finalize Question Set
-                </button>
-            </form>
         </div>
+
+        
     {% else %}
         <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:20px; margin-bottom:30px; color: #166534;">
             <strong style="display: block; font-size: 1.1rem;">✅ Finalized & Active</strong>
@@ -40,116 +53,638 @@
         </div>
     {% endif %}
 
+    <!-- PRIMARY POOL SECTION -->
     <div style="background: #f8faff; border: 1px solid #e0e7ff; border-radius: 20px; padding: 30px; margin-bottom: 50px;">
         <h2 style="margin-top: 0; color: #4338ca; border-bottom: 2px solid #e0e7ff; padding-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
             Phase 1: Primary Adaptive Pool
             <span style="font-size: 0.8rem; background: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 20px;">6-Set Pathing</span>
         </h2>
 
-        {% for diff, data in simulated_primary.items %}
-        <div style="margin-top: 30px;">
-            <h3 style="color: #4f46e5; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
-                {{ diff }} Difficulty
-                <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">({{ data.req }} Qs + {{ data.req }} Buffers)</span>
-            </h3>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 15px;">
-                <div>
-                    {% for q in data.primary %}
-                        <div style="background: white; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
-                            <p style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 600; color: #1e293b;">{{ forloop.counter }}. {{ q.question_prompt }}</p>
-                            <div style="display: grid; gap: 4px;">
-                                {% for opt in q.options.all %}
-                                <div style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; {% if opt.is_correct %} background: #f0fdf4; color: #166534; {% else %} color: #64748b; {% endif %}">
-                                    {% if opt.is_correct %}✅{% else %}⚪{% endif %} {{ opt.option_text }}
+        {% if is_finalized %}
+            {% for diff, questions in finalized_data.Primary.items %}
+                {% if questions %}
+                <div style="margin-top: 30px;">
+                    <h3 style="color: #4f46e5; font-size: 1.1rem;">{{ diff }} Difficulty</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 15px;">
+                        <div>
+                            <h4 style="color: #64748b; font-size: 0.9rem; margin-bottom: 10px;">✅ Primary Questions</h4>
+                            {% for item in questions %}{% if item.role == 'PRIMARY' %}
+                                <div style="background: white; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
+                                    <p style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 600; color: #1e293b;">{{ forloop.counter }}. {{ item.question.question_prompt }}</p>
+                                    <div style="display: grid; gap: 4px;">
+                                        {% for opt in item.question.options.all %}
+                                        <div style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; {% if opt.is_correct %}background: #f0fdf4; color: #166534;{% else %}color: #64748b;{% endif %}">
+                                            {% if opt.is_correct %}✅{% else %}⚪{% endif %} {{ opt.option_text }}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
                                 </div>
-                                {% endfor %}
-                            </div>
+                            {% endif %}{% endfor %}
                         </div>
-                    {% endfor %}
+                        <div>
+                            <h4 style="color: #64748b; font-size: 0.9rem; margin-bottom: 10px;">🔄 Buffer Questions</h4>
+                            {% for item in questions %}{% if item.role == 'BUFFER' %}
+                                <div style="background: #fcfcfc; padding: 15px; border-radius: 10px; border: 1px dashed #cbd5e1; margin-bottom: 12px;">
+                                    <p style="margin: 0 0 10px 0; font-size: 0.9rem; color: #64748b; font-style: italic;">B{{ forloop.counter }}. {{ item.question.question_prompt }}</p>
+                                    <div style="display: grid; gap: 4px;">
+                                        {% for opt in item.question.options.all %}
+                                        <div style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; {% if opt.is_correct %}background: #f0fdf4; border: 1px dashed #bbf7d0; color: #166534;{% else %}color: #94a3b8;{% endif %}">
+                                            {% if opt.is_correct %}✅{% else %}⚪{% endif %} {{ opt.option_text }}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}{% endfor %}
+                        </div>
+                    </div>
                 </div>
-               <div>
-    {% for q in data.buffer %}
-        <div style="background: #fcfcfc; padding: 15px; border-radius: 10px; border: 1px dashed #cbd5e1; margin-bottom: 12px;">
-            <p style="margin: 0 0 10px 0; font-size: 0.9rem; color: #64748b; font-style: italic;">
-                B{{ forloop.counter }}. {{ q.question_prompt }}
-            </p>
+                {% endif %}
+            {% endfor %}
 
-            <div style="display: grid; gap: 4px;">
-                {% for opt in q.options.all %}
-                <div style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px;
-                    {% if opt.is_correct %}
-                        background: #f0fdf4; border: 1px dashed #bbf7d0; color: #166534;
-                    {% else %}
-                        color: #94a3b8;
-                    {% endif %}">
-                    {% if opt.is_correct %}✅{% else %}⚪{% endif %} {{ opt.option_text }}
+        {% else %}
+            {% for diff, data in primary_data.items %}
+            <div style="margin-top: 30px;" class="difficulty-section" data-pool="primary" data-difficulty="{{ diff }}">
+                <h3 style="color: #4f46e5; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
+                    {{ diff }} Difficulty
+                    <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">
+                        (Need {{ data.required_primary }} Primary + {{ data.required_buffer }} Buffer)
+                    </span>
+                    <span class="selection-counter" style="font-size: 0.75rem; background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 12px; margin-left: auto;">
+                        P: <span class="primary-count">0</span>/{{ data.required_primary }} |
+                        B: <span class="buffer-count">0</span>/{{ data.required_buffer }}
+                    </span>
+                </h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 15px;">
+
+                    <!-- PRIMARY SELECTED COLUMN -->
+                    <div>
+                        <h4 style="color: #1e293b; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            <span style="background: #10b981; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem;">✓</span>
+                            Primary Selected
+                        </h4>
+                        <div class="selection-zone primary-zone" data-pool="primary" data-difficulty="{{ diff }}" data-role="primary"
+                             style="min-height: 300px; background: #f0fdf4; border: 2px solid #86efac; border-radius: 12px; padding: 15px;">
+                            {% for q in data.available %}
+                            {% if q.id in data.selected_primary %}
+                            <div class="question-card selected-primary"
+                                 data-question-id="{{ q.id }}"
+                                 style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 2px solid #10b981;">
+                                <div style="display: flex; align-items: start; gap: 10px;">
+                                    <div style="flex: 1;">
+                                        <p style="margin: 0 0 8px 0; font-size: 0.85rem; font-weight: 500; color: #1e293b;">{{ q.question_prompt|truncatewords:15 }}</p>
+                                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                            {% for opt in q.options.all %}
+                                            <span style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; {% if opt.is_correct %}background: #dcfce7; color: #166534;{% else %}background: #f1f5f9; color: #64748b;{% endif %}">
+                                                {{ opt.option_text|truncatewords:3 }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <button onclick="moveQuestion({{ q.id }}, 'primary', '{{ diff }}', 'buffer')" title="Move to Buffer"
+                                                style="background: #f59e0b; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; cursor: pointer;">→B</button>
+                                        <button onclick="moveQuestion({{ q.id }}, 'primary', '{{ diff }}', 'available')" title="Remove"
+                                                style="background: #ef4444; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; cursor: pointer;">✕</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- BUFFER SELECTED COLUMN -->
+                    <div>
+                        <h4 style="color: #1e293b; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            <span style="background: #f59e0b; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem;">↻</span>
+                            Buffer Selected
+                        </h4>
+                        <div class="selection-zone buffer-zone" data-pool="primary" data-difficulty="{{ diff }}" data-role="buffer"
+                             style="min-height: 300px; background: #fffbeb; border: 2px solid #fde047; border-radius: 12px; padding: 15px;">
+                            {% for q in data.available %}
+                            {% if q.id in data.selected_buffer %}
+                            <div class="question-card selected-buffer"
+                                 data-question-id="{{ q.id }}"
+                                 style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 2px solid #f59e0b;">
+                                <div style="display: flex; align-items: start; gap: 10px;">
+                                    <div style="flex: 1;">
+                                        <p style="margin: 0 0 8px 0; font-size: 0.85rem; font-weight: 500; color: #1e293b;">{{ q.question_prompt|truncatewords:15 }}</p>
+                                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                            {% for opt in q.options.all %}
+                                            <span style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; {% if opt.is_correct %}background: #dcfce7; color: #166534;{% else %}background: #f1f5f9; color: #64748b;{% endif %}">
+                                                {{ opt.option_text|truncatewords:3 }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <button onclick="moveQuestion({{ q.id }}, 'primary', '{{ diff }}', 'primary')" title="Move to Primary"
+                                                style="background: #10b981; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; cursor: pointer;">→P</button>
+                                        <button onclick="moveQuestion({{ q.id }}, 'primary', '{{ diff }}', 'available')" title="Remove"
+                                                style="background: #ef4444; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; cursor: pointer;">✕</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- AVAILABLE POOL COLUMN -->
+                    <div>
+                        <h4 style="color: #1e293b; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            <span style="background: #94a3b8; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem;">○</span>
+                            Available Pool
+                        </h4>
+                        <div class="selection-zone available-zone" data-pool="primary" data-difficulty="{{ diff }}" data-role="available"
+                             style="min-height: 300px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 15px;">
+                            {% for q in data.available %}
+                            {% if q.id not in data.selected_primary and q.id not in data.selected_buffer %}
+                            <div class="question-card"
+                                 data-question-id="{{ q.id }}"
+                                 style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 2px solid transparent; opacity: 0.8;">
+                                <div style="display: flex; align-items: start; gap: 10px;">
+                                    <div style="flex: 1;">
+                                        <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: #64748b;">{{ q.question_prompt|truncatewords:15 }}</p>
+                                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                            {% for opt in q.options.all %}
+                                            <span style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #94a3b8;">
+                                                {{ opt.option_text|truncatewords:3 }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <button onclick="moveQuestion({{ q.id }}, 'primary', '{{ diff }}', 'primary')" title="Add as Primary"
+                                                style="background: #10b981; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; cursor: pointer;">+P</button>
+                                        <button onclick="moveQuestion({{ q.id }}, 'primary', '{{ diff }}', 'buffer')" title="Add as Buffer"
+                                                style="background: #f59e0b; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; cursor: pointer;">+B</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
                 </div>
-                {% endfor %}
             </div>
-        </div>
-    {% endfor %}
-</div>
-            </div>
-        </div>
-        {% endfor %}
+            {% endfor %}
+        {% endif %}
     </div>
 
+    <!-- SECONDARY POOL SECTION -->
     <div style="background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 20px; padding: 30px; margin-bottom: 40px;">
         <h2 style="margin-top: 0; color: #0891b2; border-bottom: 2px solid #ccfbf1; padding-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
             Phase 2: Secondary Pool
             <span style="font-size: 0.8rem; background: #ccfbf1; color: #0891b2; padding: 4px 12px; border-radius: 20px;">Final Exam Mirror</span>
         </h2>
 
-        {% for diff, data in simulated_secondary.items %}
-            {% if data.primary %}
-            <div style="margin-top: 30px;">
-                <h3 style="color: #0d9488; font-size: 1.1rem;">{{ diff }} Secondary Questions</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 15px;">
-                    <div>
-                        {% for q in data.primary %}
-                            <div style="background: white; padding: 15px; border-radius: 10px; border: 1px solid #99f6e4; margin-bottom: 12px;">
-                                <p style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 600; color: #134e4a;">{{ forloop.counter }}. {{ q.question_prompt }}</p>
-                                <div style="display: grid; gap: 4px;">
-                                    {% for opt in q.options.all %}
-                                    <div style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; {% if opt.is_correct %} background: #f0fdf4; color: #166534; {% else %} color: #64748b; {% endif %}">
-                                        {% if opt.is_correct %}✅{% else %}⚪{% endif %} {{ opt.option_text }}
+        {% if is_finalized %}
+            {% for diff, questions in finalized_data.Secondary.items %}
+                {% if questions %}
+                <div style="margin-top: 30px;">
+                    <h3 style="color: #0d9488; font-size: 1.1rem;">{{ diff }} Secondary Questions</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 15px;">
+                        <div>
+                            <h4 style="color: #64748b; font-size: 0.9rem; margin-bottom: 10px;">✅ Primary Questions</h4>
+                            {% for item in questions %}{% if item.role == 'PRIMARY' %}
+                                <div style="background: white; padding: 15px; border-radius: 10px; border: 1px solid #99f6e4; margin-bottom: 12px;">
+                                    <p style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 600; color: #134e4a;">{{ forloop.counter }}. {{ item.question.question_prompt }}</p>
+                                    <div style="display: grid; gap: 4px;">
+                                        {% for opt in item.question.options.all %}
+                                        <div style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; {% if opt.is_correct %}background: #f0fdf4; color: #166534;{% else %}color: #64748b;{% endif %}">
+                                            {% if opt.is_correct %}✅{% else %}⚪{% endif %} {{ opt.option_text }}
+                                        </div>
+                                        {% endfor %}
                                     </div>
-                                    {% endfor %}
+                                </div>
+                            {% endif %}{% endfor %}
+                        </div>
+                        <div>
+                            <h4 style="color: #64748b; font-size: 0.9rem; margin-bottom: 10px;">🔄 Buffer Questions</h4>
+                            {% for item in questions %}{% if item.role == 'BUFFER' %}
+                                <div style="background: #fcfcfc; padding: 15px; border-radius: 10px; border: 1px dashed #cbd5e1; margin-bottom: 12px;">
+                                    <p style="margin: 0 0 10px 0; font-size: 0.9rem; color: #64748b; font-style: italic;">B{{ forloop.counter }}. {{ item.question.question_prompt }}</p>
+                                    <div style="display: grid; gap: 4px;">
+                                        {% for opt in item.question.options.all %}
+                                        <div style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; {% if opt.is_correct %}background: #f0fdf4; border: 1px dashed #bbf7d0; color: #166534;{% else %}color: #94a3b8;{% endif %}">
+                                            {% if opt.is_correct %}✅{% else %}⚪{% endif %} {{ opt.option_text }}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}{% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+
+        {% else %}
+            {% for diff, data in secondary_data.items %}
+            <div style="margin-top: 30px;" class="difficulty-section" data-pool="secondary" data-difficulty="{{ diff }}">
+                <h3 style="color: #0d9488; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
+                    {{ diff }} Secondary Questions
+                    <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">
+                        (Need {{ data.required_primary }} Primary + {{ data.required_buffer }} Buffer)
+                    </span>
+                    <span class="selection-counter" style="font-size: 0.75rem; background: #ccfbf1; color: #0891b2; padding: 4px 10px; border-radius: 12px; margin-left: auto;">
+                        P: <span class="primary-count">0</span>/{{ data.required_primary }} |
+                        B: <span class="buffer-count">0</span>/{{ data.required_buffer }}
+                    </span>
+                </h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 15px;">
+
+                    <!-- PRIMARY SELECTED COLUMN -->
+                    <div>
+                        <h4 style="color: #134e4a; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            <span style="background: #14b8a6; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem;">✓</span>
+                            Primary Selected
+                        </h4>
+                        <div class="selection-zone primary-zone" data-pool="secondary" data-difficulty="{{ diff }}" data-role="primary"
+                             style="min-height: 300px; background: #f0fdfa; border: 2px solid #5eead4; border-radius: 12px; padding: 15px;">
+                            {% for q in data.available %}
+                            {% if q.id in data.selected_primary %}
+                            <div class="question-card selected-primary"
+                                 data-question-id="{{ q.id }}"
+                                 style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 2px solid #14b8a6;">
+                                <div style="display: flex; align-items: start; gap: 10px;">
+                                    <div style="flex: 1;">
+                                        <p style="margin: 0 0 8px 0; font-size: 0.85rem; font-weight: 500; color: #1e293b;">{{ q.question_prompt|truncatewords:15 }}</p>
+                                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                            {% for opt in q.options.all %}
+                                            <span style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; {% if opt.is_correct %}background: #ccfbf1; color: #134e4a;{% else %}background: #f1f5f9; color: #64748b;{% endif %}">
+                                                {{ opt.option_text|truncatewords:3 }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <button onclick="moveQuestion({{ q.id }}, 'secondary', '{{ diff }}', 'buffer')" title="Move to Buffer"
+                                                style="background: #06b6d4; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; cursor: pointer;">→B</button>
+                                        <button onclick="moveQuestion({{ q.id }}, 'secondary', '{{ diff }}', 'available')" title="Remove"
+                                                style="background: #ef4444; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; cursor: pointer;">✕</button>
+                                    </div>
                                 </div>
                             </div>
-                        {% endfor %}
+                            {% endif %}
+                            {% endfor %}
+                        </div>
                     </div>
-                    <div>
-    {% for q in data.buffer %}
-        <div style="background: #fcfcfc; padding: 15px; border-radius: 10px; border: 1px dashed #cbd5e1; margin-bottom: 12px;">
-            <p style="margin: 0 0 10px 0; font-size: 0.9rem; color: #64748b; font-style: italic;">
-                B{{ forloop.counter }}. {{ q.question_prompt }}
-            </p>
 
-            <div style="display: grid; gap: 4px;">
-                {% for opt in q.options.all %}
-                <div style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px;
-                    {% if opt.is_correct %}
-                        background: #f0fdf4; border: 1px dashed #bbf7d0; color: #166534;
-                    {% else %}
-                        color: #94a3b8;
-                    {% endif %}">
-                    {% if opt.is_correct %}✅{% else %}⚪{% endif %} {{ opt.option_text }}
+                    <!-- BUFFER SELECTED COLUMN -->
+                    <div>
+                        <h4 style="color: #134e4a; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            <span style="background: #06b6d4; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem;">↻</span>
+                            Buffer Selected
+                        </h4>
+                        <div class="selection-zone buffer-zone" data-pool="secondary" data-difficulty="{{ diff }}" data-role="buffer"
+                             style="min-height: 300px; background: #e0f2fe; border: 2px solid #7dd3fc; border-radius: 12px; padding: 15px;">
+                            {% for q in data.available %}
+                            {% if q.id in data.selected_buffer %}
+                            <div class="question-card selected-buffer"
+                                 data-question-id="{{ q.id }}"
+                                 style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 2px solid #06b6d4;">
+                                <div style="display: flex; align-items: start; gap: 10px;">
+                                    <div style="flex: 1;">
+                                        <p style="margin: 0 0 8px 0; font-size: 0.85rem; font-weight: 500; color: #1e293b;">{{ q.question_prompt|truncatewords:15 }}</p>
+                                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                            {% for opt in q.options.all %}
+                                            <span style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; {% if opt.is_correct %}background: #ccfbf1; color: #134e4a;{% else %}background: #f1f5f9; color: #64748b;{% endif %}">
+                                                {{ opt.option_text|truncatewords:3 }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <button onclick="moveQuestion({{ q.id }}, 'secondary', '{{ diff }}', 'primary')" title="Move to Primary"
+                                                style="background: #14b8a6; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; cursor: pointer;">→P</button>
+                                        <button onclick="moveQuestion({{ q.id }}, 'secondary', '{{ diff }}', 'available')" title="Remove"
+                                                style="background: #ef4444; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; cursor: pointer;">✕</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- AVAILABLE POOL COLUMN -->
+                    <div>
+                        <h4 style="color: #134e4a; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            <span style="background: #94a3b8; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem;">○</span>
+                            Available Pool
+                        </h4>
+                        <div class="selection-zone available-zone" data-pool="secondary" data-difficulty="{{ diff }}" data-role="available"
+                             style="min-height: 300px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 15px;">
+                            {% for q in data.available %}
+                            {% if q.id not in data.selected_primary and q.id not in data.selected_buffer %}
+                            <div class="question-card"
+                                 data-question-id="{{ q.id }}"
+                                 style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 2px solid transparent; opacity: 0.8;">
+                                <div style="display: flex; align-items: start; gap: 10px;">
+                                    <div style="flex: 1;">
+                                        <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: #64748b;">{{ q.question_prompt|truncatewords:15 }}</p>
+                                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                            {% for opt in q.options.all %}
+                                            <span style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #94a3b8;">
+                                                {{ opt.option_text|truncatewords:3 }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <button onclick="moveQuestion({{ q.id }}, 'secondary', '{{ diff }}', 'primary')" title="Add as Primary"
+                                                style="background: #14b8a6; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; cursor: pointer;">+P</button>
+                                        <button onclick="moveQuestion({{ q.id }}, 'secondary', '{{ diff }}', 'buffer')" title="Add as Buffer"
+                                                style="background: #06b6d4; color: white; border: none; border-radius: 4px; padding: 3px 7px; font-size: 0.7rem; cursor: pointer;">+B</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
                 </div>
-                {% endfor %}
             </div>
-        </div>
-    {% endfor %}
-</div>
-                </div>
-            </div>
-            {% endif %}
-        {% endfor %}
+            {% endfor %}
+        {% endif %}
     </div>
 </div>
 
+{% if not is_finalized %}
+<script>
+// ════════════════════════════════════════════════════════════
+// STATE — seeded from Django at page load
+// ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// STATE — seeded from Django at page load
+// ════════════════════════════════════════════════════════════
+const STATE = {};
+
+// Primary Data Loop - Uses |escapejs and quotes to prevent UUID errors
+{% for diff, data in primary_data.items %}
+STATE["primary|{{ diff|escapejs }}"] = {
+    reqP: {{ data.required_primary|default:0 }},
+    reqB: {{ data.required_buffer|default:0 }},
+    primary:   new Set([{% for id in data.selected_primary %}"{{ id|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}]),
+    buffer:    new Set([{% for id in data.selected_buffer %}"{{ id|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}]),
+    deleted:   new Set(),
+    questions: {
+        {% for q in data.available %}
+        "{{ q.id|escapejs }}": {
+            prompt: "{{ q.question_prompt|escapejs }}",
+            options: [{% for opt in q.options.all %}{ text: "{{ opt.option_text|escapejs }}", correct: {{ opt.is_correct|yesno:"true,false" }} },{% endfor %}]
+        },
+        {% endfor %}
+    }
+};
+{% endfor %}
+
+// Secondary Data Loop
+{% for diff, data in secondary_data.items %}
+STATE["secondary|{{ diff|escapejs }}"] = {
+    reqP: {{ data.required_primary|default:0 }},
+    reqB: {{ data.required_buffer|default:0 }},
+    primary:   new Set([{% for id in data.selected_primary %}"{{ id|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}]),
+    buffer:    new Set([{% for id in data.selected_buffer %}"{{ id|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}]),
+    deleted:   new Set(),
+    questions: {
+        {% for q in data.available %}
+        "{{ q.id|escapejs }}": {
+            prompt: "{{ q.question_prompt|escapejs }}",
+            options: [{% for opt in q.options.all %}{ text: "{{ opt.option_text|escapejs }}", correct: {{ opt.is_correct|yesno:"true,false" }} },{% endfor %}]
+        },
+        {% endfor %}
+    }
+};
+{% endfor %}
+
+let dragInfo = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    Object.keys(STATE).forEach(key => {
+        const [pool, diff] = key.split('|');
+        rebuildZones(pool, diff);
+        updateCounters(pool, diff);
+    });
+    updateGlobalStatus();
+});
+
+// ════════════════════════════════════════════════════════════
+// ACTIONS
+// ════════════════════════════════════════════════════════════
+function moveQuestion(qid, pool, diff, targetRole) {
+    setRole(qid.toString(), pool, diff, targetRole);
+}
+
+function setRole(qid, pool, diff, targetRole) {
+    const s = STATE[pool + '|' + diff];
+    if (!s) return;
+
+    const qidStr = qid.toString();
+
+    s.primary.delete(qidStr);
+    s.buffer.delete(qidStr);
+    s.deleted.delete(qidStr);
+
+    if (targetRole === 'primary')   s.primary.add(qidStr);
+    else if (targetRole === 'buffer') s.buffer.add(qidStr);
+    else if (targetRole === 'deleted') s.deleted.add(qidStr);
+
+    rebuildZones(pool, diff);
+    updateCounters(pool, diff);
+    updateGlobalStatus();
+}
+
+function deleteQuestion(qid, pool, diff) {
+    setRole(qid, pool, diff, 'deleted');
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDERING
+// ════════════════════════════════════════════════════════════
+function makeCard(qid, pool, diff, role) {
+    const s = STATE[pool + '|' + diff];
+    const q = s.questions[qid];
+    if(!q) return document.createElement('div');
+
+    const isMain = pool === 'primary';
+    const colors = {
+        primary: isMain ? '#10b981' : '#14b8a6',
+        buffer:  isMain ? '#f59e0b' : '#06b6d4',
+    };
+
+    const borderColor = (role === 'primary') ? colors.primary : (role === 'buffer' ? colors.buffer : '#e2e8f0');
+
+    const optionsHTML = q.options.map(o =>
+        `<span style="font-size:0.7rem;padding:2px 6px;border-radius:4px;background:${o.correct?'#dcfce7':'#f1f5f9'};color:${o.correct?'#166534':'#64748b'};border:1px solid ${o.correct?'#bbf7d0':'#e2e8f0'};">
+            ${o.correct ? '✅' : '⚪'} ${o.text}
+        </span>`
+    ).join('');
+
+    let actionBtns = '';
+    if (role === 'available') {
+        actionBtns = `
+            <button class="card-btn" onclick="moveQuestion('${qid}','${pool}','${diff}','primary')" style="background:${colors.primary};">+P</button>
+            <button class="card-btn" onclick="moveQuestion('${qid}','${pool}','${diff}','buffer')" style="background:${colors.buffer};">+B</button>`;
+    } else {
+        const target = (role === 'primary') ? 'buffer' : 'primary';
+        const targetLabel = (role === 'primary') ? '→B' : '→P';
+        const targetColor = (role === 'primary') ? colors.buffer : colors.primary;
+
+        actionBtns = `
+            <button class="card-btn" onclick="moveQuestion('${qid}','${pool}','${diff}','${target}')" style="background:${targetColor};">${targetLabel}</button>
+            <button class="card-btn" onclick="moveQuestion('${qid}','${pool}','${diff}','available')" style="background:#ef4444;">✕</button>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.draggable = true;
+    card.dataset.qid = qid;
+    card.style.cssText = `background:white; padding:12px; border-radius:8px; margin-bottom:10px; border:2px solid ${borderColor}; cursor:grab;`;
+
+    card.innerHTML = `
+        <div style="display:flex;align-items:start;gap:10px;">
+            <span style="color:#cbd5e1;cursor:grab;">⠿</span>
+            <div style="flex:1;">
+                <p style="margin:0 0 8px 0;font-size:0.85rem;font-weight:500;color:#1e293b;">${q.prompt}</p>
+                <div style="display:flex;gap:5px;flex-wrap:wrap;">${optionsHTML}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">${actionBtns}</div>
+        </div>`;
+
+    card.addEventListener('dragstart', e => {
+        dragInfo = { qid, pool, diff, fromRole: role };
+        card.style.opacity = '0.4';
+    });
+    card.addEventListener('dragend', () => {
+        card.style.opacity = '1';
+        document.querySelectorAll('.selection-zone').forEach(z => z.classList.remove('drag-over'));
+    });
+
+    return card;
+}
+
+function rebuildZones(pool, diff) {
+    const s = STATE[pool + '|' + diff];
+    const section = document.querySelector(`.difficulty-section[data-pool="${pool}"][data-difficulty="${diff}"]`);
+    if (!section) return;
+
+    const zones = {
+        primary: section.querySelector('.primary-zone'),
+        buffer: section.querySelector('.buffer-zone'),
+        available: section.querySelector('.available-zone')
+    };
+
+    Object.values(zones).forEach(z => z.innerHTML = '');
+
+    Object.keys(s.questions).forEach(qid => {
+        if (s.deleted.has(qid)) return;
+        let role = 'available';
+        if (s.primary.has(qid)) role = 'primary';
+        else if (s.buffer.has(qid)) role = 'buffer';
+        zones[role].appendChild(makeCard(qid, pool, diff, role));
+    });
+
+    Object.entries(zones).forEach(([role, zone]) => setupDropZone(zone, pool, diff, role));
+}
+
+function setupDropZone(zone, pool, diff, role) {
+    zone.ondragover = e => {
+        if (dragInfo && dragInfo.pool === pool && dragInfo.diff === diff && dragInfo.fromRole !== role) {
+            e.preventDefault();
+            zone.classList.add('drag-over');
+        }
+    };
+    zone.ondragleave = () => zone.classList.remove('drag-over');
+    zone.ondrop = e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        if (dragInfo) setRole(dragInfo.qid, pool, diff, role);
+    };
+}
+
+function updateCounters(pool, diff) {
+    const s = STATE[pool + '|' + diff];
+    const section = document.querySelector(`.difficulty-section[data-pool="${pool}"][data-difficulty="${diff}"]`);
+    if (!section) return;
+    section.querySelector('.primary-count').textContent = s.primary.size;
+    section.querySelector('.buffer-count').textContent  = s.buffer.size;
+}
+
+function updateGlobalStatus() {
+    const statusDiv = document.getElementById('selection-status');
+    let issues = [];
+    Object.entries(STATE).forEach(([key, s]) => {
+        const [pool, diff] = key.split('|');
+        if (s.primary.size !== s.reqP) issues.push(`${diff}: P needs ${s.reqP}`);
+        if (s.buffer.size !== s.reqB) issues.push(`${diff}: B needs ${s.reqB}`);
+    });
+    statusDiv.innerHTML = issues.length ? "⚠️ " + issues.join(' | ') : "✅ Requirements met!";
+    statusDiv.style.color = issues.length ? "#ea580c" : "#166534";
+}
+
+async function saveSelections() {
+    const payload = { primary: {}, secondary: {} };
+    Object.entries(STATE).forEach(([key, s]) => {
+        const [pool, diff] = key.split('|');
+        payload[pool][diff] = { primary: Array.from(s.primary), buffer: Array.from(s.buffer) };
+    });
+
+    try {
+        const res = await fetch('{% url "save_quiz_selections" quiz.id %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        showNotification(data.success ? 'Saved!' : 'Error: ' + data.error, data.success ? 'success' : 'error');
+    } catch (e) { showNotification('Save failed', 'error'); }
+}
+
+function showNotification(msg, type) {
+    const n = document.createElement('div');
+    n.style.cssText = `position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;background:${type==='success'?'#10b981':'#ef4444'};color:white;z-index:9999;font-weight:600;`;
+    n.textContent = msg;
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), 3000);
+
+}
+</script>
+
 <style>
-    .btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+@keyframes slideIn  { from { transform:translateX(120px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+@keyframes slideOut { from { transform:translateX(0); opacity:1; } to { transform:translateX(120px); opacity:0; } }
+
+.question-card { transition: box-shadow 0.15s, opacity 0.15s; }
+.question-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.question-card[draggable="true"]:active { cursor: grabbing; }
+
+/* drop zone highlight */
+.selection-zone { overflow-y: auto; max-height: 600px; transition: background 0.15s, border-color 0.15s; }
+.selection-zone.drag-over { background: #ede9fe !important; border-color: #7c3aed !important; border-style: dashed !important; }
+
+/* scrollbar */
+.selection-zone::-webkit-scrollbar { width: 6px; }
+.selection-zone::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+.selection-zone::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+/* card action buttons */
+.card-btn {
+    color: white; border: none; border-radius: 4px;
+    padding: 3px 8px; font-size: 0.7rem; cursor: pointer;
+    white-space: nowrap; transition: filter 0.1s;
+}
+.card-btn:hover { filter: brightness(1.15); }
+
+.btn-save:hover, .btn-clear:hover, .btn-finalize:hover {
+    transform: translateY(-1px); filter: brightness(1.08);
+}
 </style>
+{% endif %}
 {% endblock %}

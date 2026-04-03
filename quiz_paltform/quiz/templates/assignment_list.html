@@ -56,11 +56,9 @@
             <td style="padding: 15px;">
                 {% if a.status == 'Completed' %}
                    <div style="font-size: 1.1rem; font-weight: 800; color: #22c55e;">
-    {% if a.secondary_exam_score %}
-        {{ a.main_exam_score|add:a.secondary_exam_score }}
-    {% else %}
-        {{ a.main_exam_score }}
-    {% endif %}
+
+        {{ a.final_score }}
+
 </div>
                 {% else %}
                     <span style="color: #cbd5e1; font-size: 0.8rem;">Pending</span>

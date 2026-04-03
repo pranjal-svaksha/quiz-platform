@@ -17,7 +17,15 @@ urlpatterns = [
     path('quizzes/create/', views.create_quiz, name='create_quiz'),
     path('quiz/<uuid:quiz_id>/assign/', views.create_assignment, name='create_assignment'),
     # path('quizzes/<uuid:quiz_id>/questions/', views.view_quiz_questions, name='view_quiz_questions'),
-    path('quizzes/<uuid:quiz_id>/questions/', views.view_finalized_quiz_questions, name='view_quiz_questions'),
+    path('quizzes/<uuid:quiz_id>/questions/', views.view_quiz_questions, name='view_quiz_questions'),
+    # Save Selections (AJAX endpoint)
+    path('quiz/<uuid:quiz_id>/save-selections/', views.save_quiz_selections, name='save_quiz_selections'),
+
+    # Clear/Reset Selections
+    path('quiz/<uuid:quiz_id>/clear-selections/', views.clear_quiz_selections, name='clear_quiz_selections'),
+
+    # Finalize Quiz
+    path('quiz/<uuid:quiz_id>/finalize/', views.finalize_quiz_questions, name='finalize_quiz_questions'),
     path('assignments/', views.assignment_list, name='assignment_list'),
     path('assessments/<uuid:assessment_id>/report/', views.assessment_result_detail, name='assessment_result_detail'),
     path('assessment/start/<uuid:token>/', views.start_assessment, name='start_assessment'),
@@ -25,5 +33,5 @@ urlpatterns = [
     path('assessments/delete/<uuid:assessment_id>/', views.delete_assessment, name='delete_assessment'),
     path('take/<str:token>/', views.take_assessment, name='take_assessment'),
     path('submit/<str:token>/', views.submit_answer, name='submit_answer'),
-    path('finalize_quiz_questions/<uuid:quiz_id>/', views.finalize_quiz_questions, name='finalize_quiz_questions'),
+
 ]

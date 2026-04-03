@@ -43,7 +43,7 @@
             <option value="{{ level.id }}">{{ level.job.name }} - {{ level.level_name }}</option>
             {% endfor %}
         </select>
-        <p style="font-size: 11px; color: #64748b; margin-top: 5px;">Leave empty to reuse Primary levels for the Boss Phase.</p>
+        <p style="font-size: 11px; color: #64748b; margin-top: 5px;">Leave empty to reuse Primary levels for the Secondary Phase.</p>
     </div>
 </div>
 
@@ -74,17 +74,17 @@
             </div>
 
             <div style="background: #f0fdfa; padding: 20px; border-radius: 12px; border: 1px solid #ccfbf1;">
-                <h3 style="margin-top: 0; font-size: 15px; margin-bottom: 15px; color: #0891b2;">Phase 2: Boss Phase Quotas</h3>
+                <h3 style="margin-top: 0; font-size: 15px; margin-bottom: 15px; color: #0891b2;">Phase 2: Secondary Phase Quotas</h3>
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
                     <div class="quota-group">
                         <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Easy</label>
-                        <input type="number" name="sec_easy_count" value="0" min="0" oninput="updateMirror(this)"
+                        <input type="number" name="sec_easy_count" value="5" min="0" oninput="updateMirror(this)"
                                style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
                         <small style="color: #0891b2; font-size: 11px;">Req: <span class="mirror-val">0</span></small>
                     </div>
                     <div class="quota-group">
                         <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: 600;">Medium</label>
-                        <input type="number" name="sec_medium_count" value="0" min="0" oninput="updateMirror(this)"
+                        <input type="number" name="sec_medium_count" value="10" min="0" oninput="updateMirror(this)"
                                style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
                         <small style="color: #0891b2; font-size: 11px;">Req: <span class="mirror-val">0</span></small>
                     </div>

@@ -8,9 +8,91 @@ from django.db import transaction
 from django.contrib import messages
 from django.utils import timezone
 import logging
-from django.db.models import Count, Min, Max
+from django.db.models import Count, Min
 
 
+# Add this temporary diagnostic view to help identify field names
+
+def diagnostic_model_fields(request):
+    """
+    Temporary diagnostic view to check your actual model field names.
+    Access at: /quiz/diagnostic/
+    """
+    from django.http import HttpResponse
+
+    # Get a sample question
+    sample_question = Question.objects.first()
+
+    if not sample_question:
+        return HttpResponse("No questions in database. Add some questions first.")
+
+    # Get field names
+    question_fields = [f.name for f in Question._meta.get_fields()]
+
+    # Get sample option if exists
+    sample_option = sample_question.options.first() if hasattr(sample_question, 'options') else None
+    option_fields = [f.name for f in sample_option._meta.model._meta.get_fields()] if sample_option else []
+
+    # Build diagnostic output
+    output = []
+    output.append("<h1>Model Field Diagnostic</h1>")
+    output.append("<h2>Question Model Fields:</h2>")
+    output.append("<ul>")
+    for field in question_fields:
+        output.append(f"<li><strong>{field}</strong></li>")
+    output.append("</ul>")
+
+    output.append("<h2>Sample Question Data:</h2>")
+    output.append("<pre>")
+    for field in question_fields:
+        try:
+            value = getattr(sample_question, field)
+            output.append(f"{field}: {value}\n")
+        except:
+            output.append(f"{field}: [relationship field]\n")
+    output.append("</pre>")
+
+    if sample_option:
+        output.append("<h2>Option Model Fields:</h2>")
+        output.append("<ul>")
+        for field in option_fields:
+            output.append(f"<li><strong>{field}</strong></li>")
+        output.append("</ul>")
+
+        output.append("<h2>Sample Option Data:</h2>")
+        output.append("<pre>")
+        for field in option_fields:
+            try:
+                value = getattr(sample_option, field)
+                output.append(f"{field}: {value}\n")
+            except:
+                output.append(f"{field}: [relationship field]\n")
+        output.append("</pre>")
+
+    output.append("<hr>")
+    output.append("<h2>What to look for:</h2>")
+    output.append("<p><strong>Question text field is probably one of these:</strong></p>")
+    output.append("<ul>")
+    output.append("<li><code>text</code></li>")
+    output.append("<li><code>question_text</code></li>")
+    output.append("<li><code>question_prompt</code></li>")
+    output.append("<li><code>prompt</code></li>")
+    output.append("</ul>")
+
+    output.append("<p><strong>Option text field is probably one of these:</strong></p>")
+    output.append("<ul>")
+    output.append("<li><code>text</code></li>")
+    output.append("<li><code>option_text</code></li>")
+    output.append("</ul>")
+
+    return HttpResponse("\n".join(output))
+
+
+# Add to urls.py:
+# path('quiz/diagnostic/', views.diagnostic_model_fields, name='diagnostic_model_fields'),
+
+def custom_404_view(request, exception=None):
+    return render(request, '404.html', status=404)
 
 # --- 1. THE MAIN DASHBOARD (Manage Technologies) ---
 def job_dashboard(request):
@@ -200,90 +282,29 @@ def delete_quiz(request, quiz_id):
         quiz.delete()
     return redirect('quiz_list')
 
-# def create_quiz(request):
-#     """Form to create a new Adaptive Quiz with strict 1:1 Mirror Validation"""
-#     levels = JobLevel.objects.all().select_related('job')
-#
-#     if request.method == "POST":
-#         title = request.POST.get('title')
-#         p_level_id = request.POST.get('primary_level')
-#         s_level_id = request.POST.get('secondary_level')
-#
-#         # 1. Parse Quotas
-#         try:
-#             e_q = int(request.POST.get('easy_count', 5))
-#             m_q = int(request.POST.get('medium_count', 10))
-#             h_q = int(request.POST.get('hard_count', 5))
-#             sec_q = int(request.POST.get('sec_count', 5))
-#         except ValueError:
-#             messages.error(request, "Quotas must be valid numbers.")
-#             return render(request, 'create_quiz.html', {'levels': levels})
-#
-#         # 2. Define Pools
-#         p_pool = Question.objects.filter(job_level_id=p_level_id)
-#         # If no secondary level is picked, the "Boss Phase" pulls from the Primary Level pool
-#         s_pool = Question.objects.filter(job_level_id=s_level_id) if s_level_id else p_pool
-#
-#         error_found = False
-#
-#         # 3. Validation Logic: Primary Pool (Easy, Medium, Hard)
-#         primary_validation = [
-#             ('Easy', e_q * 2),
-#             ('Medium', m_q * 2),
-#             ('Hard', h_q * 2),
-#         ]
-#
-#         for diff, required in primary_validation:
-#             actual = p_pool.filter(difficulty=diff).count()
-#             if actual < required:
-#                 messages.error(request,
-#                                f"Not enough {diff} questions in Primary Pool. Need {required} unique Qs (1:1 Mirror), but only {actual} exist.")
-#                 error_found = True
-#
-#         # 4. Validation Logic: Secondary JOB LEVEL (The Boss Phase)
-#         # We look for 'Hard' difficulty questions in the Secondary Job Level
-#         sec_required = sec_q * 2
-#
-#         # If Secondary Job Level is the SAME as Primary, we must subtract the Hard Qs already used
-#         if s_level_id == p_level_id or not s_level_id:
-#             sec_actual = s_pool.filter(difficulty='Hard').count() - (h_q * 2)
-#         else:
-#             # If it's a different Job Level, we have the whole Hard pool available
-#             sec_actual = s_pool.filter(difficulty='Hard').count()
-#
-#         if sec_actual < sec_required:
-#             messages.error(request,
-#                            f"Not enough high-level questions in Secondary Job Level. Need {sec_required} unique Qs, but only {max(0, sec_actual)} are available.")
-#             error_found = True
-#
-#         if error_found:
-#             return render(request, 'create_quiz.html', {'levels': levels})
-#
-#         calculated_total = e_q + m_q + h_q + sec_q
-#
-#         # 2. Update the Create call
-#         new_quiz = Quiz.objects.create(
-#             title=title,
-#             primary_job_level_id=p_level_id,
-#             secondary_job_level_id=s_level_id if s_level_id else None,
-#             easy_count=e_q,
-#             medium_count=m_q,
-#             hard_count=h_q,
-#             secondary_exam_count=sec_q,
-#             # Use the variable instead of the hardcoded 25
-#             total_questions_limit=calculated_total
-#         )
-#
-#         messages.success(request, f"Quiz '{title}' created successfully with 1:1 Mirrors!")
-#         return redirect('quiz_list')
-#
-#     return render(request, 'create_quiz.html', {'levels': levels})
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db import transaction
+from django.http import JsonResponse
+import random
+import json
+
+# ============================================================================
+# CONFIGURATION: How many extra questions to show beyond requirements
+# ============================================================================
+PREVIEW_MULTIPLIER = 2.0  # Show 2x the required questions (e.g., need 10 -> show 20)
+
+
+# ============================================================================
+# PHASE 1: CREATE QUIZ (Same as before)
+# ============================================================================
+
 def create_quiz(request):
     levels = JobLevel.objects.all().select_related('job')
 
     if request.method == "POST":
         title = request.POST.get('title')
-        # Capture multiple IDs from the form
         p_level_ids = request.POST.getlist('primary_levels')
         s_level_ids = request.POST.getlist('secondary_levels')
 
@@ -300,7 +321,7 @@ def create_quiz(request):
             messages.error(request, "Counts must be valid numbers.")
             return render(request, 'create_quiz.html', {'levels': levels})
 
-        # Define Pools across ALL selected levels
+        # Define Pools
         p_pool = Question.objects.filter(job_level_id__in=p_level_ids)
         s_pool = Question.objects.filter(job_level_id__in=s_level_ids) if s_level_ids else p_pool
 
@@ -314,11 +335,10 @@ def create_quiz(request):
                                f"Not enough {diff} questions in Primary Levels. Need {req * 2}, found {actual}.")
                 error_found = True
 
-        # Validation Logic: Secondary (Accounting for overlap)
+        # Validation Logic: Secondary
         is_same_pool = not s_level_ids or set(p_level_ids) == set(s_level_ids)
 
         for diff, req, p_req in [('Easy', se_e, e_q), ('Medium', se_m, m_q), ('Hard', se_h, h_q)]:
-            # If pools are identical, subtract the unique ones already "reserved" for Phase 1
             reserved = (p_req * 2) if is_same_pool else 0
             actual = s_pool.filter(difficulty=diff).count() - reserved
             if actual < (req * 2):
@@ -342,40 +362,49 @@ def create_quiz(request):
             total_questions_limit=total_limit
         )
 
-        # Set ManyToMany relationships (must happen AFTER .create())
+        # Set ManyToMany relationships
         new_quiz.primary_job_levels.set(p_level_ids)
         if s_level_ids:
             new_quiz.secondary_job_levels.set(s_level_ids)
 
         messages.success(request, f"Quiz '{title}' created successfully!")
-        return redirect('quiz_list')
+        return redirect('view_quiz_questions', quiz_id=new_quiz.id)
 
     return render(request, 'create_quiz.html', {'levels': levels})
 
 
+# ============================================================================
+# PHASE 2: VIEW QUESTIONS WITH MANUAL SELECTION
+# ============================================================================
 
 def view_quiz_questions(request, quiz_id):
-    # Use prefetch_related for ManyToMany fields
+    """
+    Main view for question selection:
+    - If finalized: show locked questions from DB
+    - If not finalized: show expanded pool with pre-selected defaults
+    """
     quiz = get_object_or_404(
         Quiz.objects.prefetch_related('primary_job_levels', 'secondary_job_levels'),
         id=quiz_id
     )
 
-    # --- 1. If finalized: show the SAVED fixed question set ---
+    # --- FINALIZED: Show saved questions ---
     if quiz.is_finalized:
         saved_qs = QuizQuestion.objects.filter(quiz=quiz).select_related(
             'question'
         ).prefetch_related('question__options')
 
-        # Updated structure to support granular Boss Phase difficulties
         finalized_data = {
             'Primary': {'Easy': [], 'Medium': [], 'Hard': []},
             'Secondary': {'Easy': [], 'Medium': [], 'Hard': []}
         }
 
         for qq in saved_qs:
-            pool_key = 'Secondary' if qq.pool == 'SECONDARY' else 'Primary'
-            finalized_data[pool_key][qq.difficulty].append(qq.question)
+            pool_key = 'Secondary' if qq.pool == 'secondary' else 'Primary'
+            finalized_data[pool_key][qq.difficulty].append({
+                'question': qq.question,
+                'role': qq.role.upper()  # converts 'primary' → 'PRIMARY', 'buffer' → 'BUFFER'
+            })
 
         return render(request, 'view_quiz_questions.html', {
             'quiz': quiz,
@@ -383,70 +412,395 @@ def view_quiz_questions(request, quiz_id):
             'finalized_data': finalized_data,
         })
 
-    # --- 2. Not finalized: show PREVIEW (Random Sample) ---
+    # --- NOT FINALIZED: Show selection interface ---
 
-    # Define Primary Pool from ALL selected primary levels
-    p_level_ids = quiz.primary_job_levels.values_list('id', flat=True)
-    p_pool = list(Question.objects.filter(job_level_id__in=p_level_ids).prefetch_related('options'))
-
-    # Define Secondary Pool (Boss Phase)
-    s_level_ids = quiz.secondary_job_levels.values_list('id', flat=True)
+    # Get level IDs
+    p_level_ids = list(quiz.primary_job_levels.values_list('id', flat=True))
+    s_level_ids = list(quiz.secondary_job_levels.values_list('id', flat=True))
     if not s_level_ids:
-        s_level_ids = p_level_ids  # Fallback to primary if none selected
-    s_pool = list(Question.objects.filter(job_level_id__in=s_level_ids).prefetch_related('options'))
+        s_level_ids = p_level_ids
 
-    def get_preview_data(pool, counts_dict):
-        """Helper to sample primary and buffer questions"""
-        results = {}
-        # We use a set to track used IDs to ensure no duplicates if pools overlap
-        used_ids = set()
+    # Check if selections already exist in session
+    session_key = f'quiz_{quiz_id}_selections'
+    saved_selections = request.session.get(session_key)
 
-        for diff, count in counts_dict.items():
-            # Filter pool by difficulty and exclude already picked questions
-            available = [q for q in pool if q.difficulty == diff and q.id not in used_ids]
-            needed = count * 2  # 1 Primary + 1 Mirror Buffer
+    # Build available questions and pre-selections
+    primary_data = _build_selection_data(
+        level_ids=p_level_ids,
+        counts={
+            'Easy': quiz.easy_count,
+            'Medium': quiz.medium_count,
+            'Hard': quiz.hard_count
+        },
+        pool_name='primary',
+        saved_selections=saved_selections.get('primary') if saved_selections else None,
+        exclude_ids=[]
+    )
 
-            if len(available) >= needed:
-                selected = random.sample(available, needed)
-                primary_qs = selected[:count]
-                buffer_qs = selected[count:]
-                # Mark as used so they aren't picked again in later difficulties or phases
-                for q in selected: used_ids.add(q.id)
+    # For secondary pool, exclude questions already used in primary
+    used_primary_ids = []
+    if saved_selections and 'primary' in saved_selections:
+        for diff_data in saved_selections['primary'].values():
+            used_primary_ids.extend(diff_data.get('primary', []))
+            used_primary_ids.extend(diff_data.get('buffer', []))
+
+    secondary_data = _build_selection_data(
+        level_ids=s_level_ids,
+        counts={
+            'Easy': quiz.sec_easy_count,
+            'Medium': quiz.sec_medium_count,
+            'Hard': quiz.sec_hard_count
+        },
+        pool_name='secondary',
+        saved_selections=saved_selections.get('secondary') if saved_selections else None,
+        exclude_ids=used_primary_ids
+    )
+    print("PRIMARY DATA:", {
+        diff: {
+            'count': len(data['available']),
+            'sel_primary': data['selected_primary'],
+            'sel_buffer': data['selected_buffer'],
+        }
+        for diff, data in primary_data.items()
+    })
+    context = {
+        'quiz': quiz,
+        'is_finalized': False,
+        'primary_data': primary_data,
+        'secondary_data': secondary_data,
+        'has_saved_selections': saved_selections is not None
+    }
+
+    return render(request, 'view_quiz_questions.html', context)
+
+
+def _build_selection_data(level_ids, counts, pool_name, saved_selections=None, exclude_ids=None):
+    """
+    Helper to build question selection data for a pool.
+
+    Returns structure:
+    {
+        'Easy': {
+            'required_primary': 5,
+            'required_buffer': 5,
+            'available': [Q1, Q2, Q3, ...],  # Expanded pool (2x required)
+            'selected_primary': [id1, id2, ...],  # Pre-selected or saved
+            'selected_buffer': [id6, id7, ...]
+        },
+        'Medium': {...},
+        'Hard': {...}
+    }
+    """
+    if exclude_ids is None:
+        exclude_ids = []
+
+    result = {}
+
+    for difficulty, count in counts.items():
+        if count == 0:
+            continue
+
+        required_total = count * 2  # Primary + Buffer
+        show_count = max(int(required_total * PREVIEW_MULTIPLIER), required_total + 5)
+
+        # Fetch available questions
+        available_qs = list(
+            Question.objects.filter(
+                job_level_id__in=level_ids,
+                difficulty=difficulty
+            ).exclude(
+                id__in=exclude_ids
+            ).prefetch_related('options')[:show_count]
+        )
+
+        # Use saved selections if they exist
+        if saved_selections and difficulty in saved_selections:
+            selected_primary = saved_selections[difficulty].get('primary', [])
+            selected_buffer = saved_selections[difficulty].get('buffer', [])
+        else:
+            # Pre-select random questions as defaults
+            if len(available_qs) >= required_total:
+                shuffled = available_qs.copy()
+                random.shuffle(shuffled)
+                selected_primary = [q.id for q in shuffled[:count]]
+                selected_buffer = [q.id for q in shuffled[count:required_total]]
             else:
-                primary_qs = available
-                buffer_qs = []
+                # Not enough questions - select what's available
+                selected_primary = [q.id for q in available_qs[:count]]
+                selected_buffer = [q.id for q in available_qs[count:required_total]]
 
-            results[diff] = {
-                'primary': primary_qs,
-                'buffer': buffer_qs,
-                'req': count
-            }
-        return results
+        result[difficulty] = {
+            'required_primary': count,
+            'required_buffer': count,
+            'available': available_qs,
+            'selected_primary': selected_primary,
+            'selected_buffer': selected_buffer,
+        }
 
-    # Generate Primary Preview
-    primary_counts = {
+    return result
+
+
+# ============================================================================
+# PHASE 3: SAVE SELECTIONS TO SESSION
+# ============================================================================
+
+def save_quiz_selections(request, quiz_id):
+    """
+    AJAX endpoint to save user's manual question selections to session.
+
+    Expected POST data:
+    {
+        "primary": {
+            "Easy": {"primary": [1,2,3], "buffer": [4,5,6]},
+            "Medium": {...},
+            "Hard": {...}
+        },
+        "secondary": {
+            "Easy": {...},
+            ...
+        }
+    }
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
+
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+
+    if quiz.is_finalized:
+        return JsonResponse({'success': False, 'error': 'Quiz already finalized'}, status=400)
+
+    try:
+        selections = json.loads(request.body)
+
+        # Validate selections
+        validation_result = _validate_selections(quiz, selections)
+        if not validation_result['valid']:
+            return JsonResponse({
+                'success': False,
+                'error': validation_result['error']
+            }, status=400)
+
+        # Save to session
+        session_key = f'quiz_{quiz_id}_selections'
+        request.session[session_key] = selections
+        request.session.modified = True
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Selections saved successfully!'
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def _validate_selections(quiz, selections):
+    """
+    Validate that selections meet requirements:
+    - Correct counts for each difficulty
+    - No duplicate IDs across pools/roles
+    - All IDs are valid questions
+    """
+    # Check structure
+    if 'primary' not in selections or 'secondary' not in selections:
+        return {'valid': False, 'error': 'Missing primary or secondary selections'}
+
+    all_selected_ids = []
+
+    # Validate Primary
+    primary_requirements = {
         'Easy': quiz.easy_count,
         'Medium': quiz.medium_count,
         'Hard': quiz.hard_count
     }
-    simulated_primary = get_preview_data(p_pool, primary_counts)
 
-    # Generate Secondary Preview (Boss Phase)
-    secondary_counts = {
+    for diff, required_count in primary_requirements.items():
+        if required_count == 0:
+            continue
+
+        if diff not in selections['primary']:
+            return {'valid': False, 'error': f'Missing Primary {diff} selections'}
+
+        primary_ids = selections['primary'][diff].get('primary', [])
+        buffer_ids = selections['primary'][diff].get('buffer', [])
+
+        if len(primary_ids) != required_count:
+            return {'valid': False, 'error': f'Primary {diff}: need {required_count} primary, got {len(primary_ids)}'}
+
+        if len(buffer_ids) != required_count:
+            return {'valid': False, 'error': f'Primary {diff}: need {required_count} buffer, got {len(buffer_ids)}'}
+
+        all_selected_ids.extend(primary_ids)
+        all_selected_ids.extend(buffer_ids)
+
+    # Validate Secondary
+    secondary_requirements = {
         'Easy': quiz.sec_easy_count,
         'Medium': quiz.sec_medium_count,
         'Hard': quiz.sec_hard_count
     }
-    simulated_secondary = get_preview_data(s_pool, secondary_counts)
 
-    context = {
-        'quiz': quiz,
-        'is_finalized': False,
-        'simulated_primary': simulated_primary,
-        'simulated_secondary': simulated_secondary,
-    }
-    return render(request, 'view_quiz_questions.html', context)
+    for diff, required_count in secondary_requirements.items():
+        if required_count == 0:
+            continue
 
+        if diff not in selections['secondary']:
+            return {'valid': False, 'error': f'Missing Secondary {diff} selections'}
+
+        primary_ids = selections['secondary'][diff].get('primary', [])
+        buffer_ids = selections['secondary'][diff].get('buffer', [])
+
+        if len(primary_ids) != required_count:
+            return {'valid': False, 'error': f'Secondary {diff}: need {required_count} primary, got {len(primary_ids)}'}
+
+        if len(buffer_ids) != required_count:
+            return {'valid': False, 'error': f'Secondary {diff}: need {required_count} buffer, got {len(buffer_ids)}'}
+
+        all_selected_ids.extend(primary_ids)
+        all_selected_ids.extend(buffer_ids)
+
+    # Check for duplicates
+    if len(all_selected_ids) != len(set(all_selected_ids)):
+        return {'valid': False, 'error': 'Duplicate questions selected across pools/roles'}
+
+    # Verify all IDs exist in database
+    existing_count = Question.objects.filter(id__in=all_selected_ids).count()
+    if existing_count != len(all_selected_ids):
+        return {'valid': False, 'error': 'Some selected question IDs are invalid'}
+
+    return {'valid': True}
+
+
+# ============================================================================
+# PHASE 4: FINALIZE WITH SAVED SELECTIONS
+# ============================================================================
+
+@transaction.atomic
+def finalize_quiz_questions(request, quiz_id):
+    """
+    Finalize quiz using manually selected questions from session.
+    """
+    if request.method != "POST":
+        return redirect('view_quiz_questions', quiz_id=quiz_id)
+
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+
+    if quiz.is_finalized:
+        messages.warning(request, 'Quiz is already finalized.')
+        return redirect('view_quiz_questions', quiz_id=quiz_id)
+
+    # Get selections from session
+    session_key = f'quiz_{quiz_id}_selections'
+    selections = request.session.get(session_key)
+
+    if not selections:
+        messages.error(request, 'No selections found. Please select questions first.')
+        return redirect('view_quiz_questions', quiz_id=quiz_id)
+
+    # Validate one more time
+    validation_result = _validate_selections(quiz, selections)
+    if not validation_result['valid']:
+        messages.error(request, f'Invalid selections: {validation_result["error"]}')
+        return redirect('view_quiz_questions', quiz_id=quiz_id)
+
+    # Save to database
+    _save_selections_to_db(quiz, selections)
+
+    # Mark as finalized
+    quiz.is_finalized = True
+    quiz.save()
+
+    # Clear session data
+    if session_key in request.session:
+        del request.session[session_key]
+
+    messages.success(request, f"Quiz '{quiz.title}' has been finalized with your selected questions!")
+    return redirect('view_quiz_questions', quiz_id=quiz_id)
+
+
+def _save_selections_to_db(quiz, selections):
+    """
+    Save manually selected questions to QuizQuestion join table.
+    """
+    # Save Primary Pool
+    for difficulty in ['Easy', 'Medium', 'Hard']:
+        if difficulty not in selections['primary']:
+            continue
+
+        primary_ids = selections['primary'][difficulty]['primary']
+        buffer_ids = selections['primary'][difficulty]['buffer']
+
+        # Save primary role
+        for q_id in primary_ids:
+            QuizQuestion.objects.create(
+                quiz=quiz,
+                question_id=q_id,
+                difficulty=difficulty,
+                pool=QuizQuestion.Pool.PRIMARY_POOL,
+                role=QuizQuestion.Role.PRIMARY
+            )
+
+        # Save buffer role
+        for q_id in buffer_ids:
+            QuizQuestion.objects.create(
+                quiz=quiz,
+                question_id=q_id,
+                difficulty=difficulty,
+                pool=QuizQuestion.Pool.PRIMARY_POOL,
+                role=QuizQuestion.Role.BUFFER
+            )
+
+    # Save Secondary Pool
+    for difficulty in ['Easy', 'Medium', 'Hard']:
+        if difficulty not in selections['secondary']:
+            continue
+
+        primary_ids = selections['secondary'][difficulty]['primary']
+        buffer_ids = selections['secondary'][difficulty]['buffer']
+
+        # Save primary role
+        for q_id in primary_ids:
+            QuizQuestion.objects.create(
+                quiz=quiz,
+                question_id=q_id,
+                difficulty=difficulty,
+                pool=QuizQuestion.Pool.SECONDARY_POOL,
+                role=QuizQuestion.Role.PRIMARY
+            )
+
+        # Save buffer role
+        for q_id in buffer_ids:
+            QuizQuestion.objects.create(
+                quiz=quiz,
+                question_id=q_id,
+                difficulty=difficulty,
+                pool=QuizQuestion.Pool.SECONDARY_POOL,
+                role=QuizQuestion.Role.BUFFER
+            )
+
+
+# ============================================================================
+# PHASE 5: CLEAR SELECTIONS (Optional - reset to defaults)
+# ============================================================================
+
+def clear_quiz_selections(request, quiz_id):
+    """
+    Clear saved selections and return to default pre-selected state.
+    """
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+
+    if quiz.is_finalized:
+        messages.warning(request, 'Cannot clear selections - quiz is finalized.')
+        return redirect('view_quiz_questions', quiz_id=quiz_id)
+
+    session_key = f'quiz_{quiz_id}_selections'
+    if session_key in request.session:
+        del request.session[session_key]
+        messages.success(request, 'Selections cleared. Defaults reloaded.')
+
+    return redirect('view_quiz_questions', quiz_id=quiz_id)
 
 def assignment_list(request):
     """View all sent assessments and their status"""
@@ -460,50 +814,6 @@ def delete_assessment(request, assessment_id):
     return redirect('assignment_list')
 
 
-# def assessment_result_detail(request, assessment_id):
-#     # Fetch assessment with related candidate and quiz data
-#     assessment = get_object_or_404(
-#         Assessment.objects.select_related('candidate', 'quiz', 'session'),
-#         id=assessment_id
-#     )
-#
-#     session = assessment.session
-#     # Fetch all responses with questions and options to avoid N+1 queries
-#     # Change .order_id to .order_by
-#     responses = Response.objects.filter(test_session=session).select_related('question').prefetch_related(
-#         'selected_options', 'question__options').order_by('timestamp')
-#
-#     # Breakdown by Difficulty
-#     stats = {
-#         'easy': responses.filter(question__difficulty='Easy').count(),
-#         'medium': responses.filter(question__difficulty='Medium').count(),
-#         'hard': responses.filter(question__difficulty='Hard').count(),
-#         'correct': responses.filter(is_correct=True).count(),
-#         'wrong': responses.filter(is_correct=False, is_skipped=False).count(),
-#         'skipped': responses.filter(is_skipped=True).count(),
-#     }
-#
-#     # Identify if Buffer questions were used
-#     # A question is a 'Buffer' if it was part of the QuizQuestion pool as a Role.BUFFER
-#     # We'll tag the response list for the template
-#     detailed_responses = []
-#     for resp in responses:
-#         # Check the role in the QuizQuestion join table
-#         from .models import QuizQuestion
-#         quiz_rel = QuizQuestion.objects.filter(quiz=assessment.quiz, question=resp.question).first()
-#
-#         detailed_responses.append({
-#             'obj': resp,
-#             'is_buffer': quiz_rel.role == 'buffer' if quiz_rel else False,
-#             'difficulty': resp.question.difficulty,
-#         })
-#
-#     return render(request, 'assessment_report.html', {
-#         'assessment': assessment,
-#         'session': session,
-#         'stats': stats,
-#         'responses': detailed_responses
-#     })
 
 def assessment_result_detail(request, assessment_id):
     # Fetch assessment with related candidate and quiz data
@@ -780,52 +1090,7 @@ def assessment_result_detail(request, assessment_id):
     }
 
     return render(request, 'assessment_report.html', context)
-# def create_assignment(request, quiz_id):
-#     quiz = get_object_or_404(Quiz, id=quiz_id)
-#
-#     if request.method == "POST":
-#         # --- NEW GUARD: Check if finalized ---
-#         if not quiz.is_finalized:
-#             messages.error(
-#                 request,
-#                 f"Cannot assign '{quiz.title}' because the questions are not finalized yet. "
-#                 f"Please finalize the questions first."
-#             )
-#             return render(request, 'create_assignment.html', {'quiz': quiz})
-#
-#         # --- EXISTING LOGIC ---
-#         c_name = request.POST.get('candidate_name')
-#         c_email = request.POST.get('candidate_email')
-#         time_limit = int(request.POST.get('time_limit', 30))
-#
-#         candidate, _ = Candidate.objects.get_or_create(
-#             email=c_email, defaults={'name': c_name}
-#         )
-#
-#         # Generate assessment and token
-#         assessment = Assessment.objects.create(
-#             quiz=quiz,
-#             candidate=candidate,
-#             magic_link_token=str(uuid.uuid4()),
-#             test_duration_mins=time_limit
-#         )
-#
-#         # Initialize Session
-#         TestSession.objects.create(
-#             assessment=assessment,
-#             easy_pool=quiz.easy_count,
-#             medium_pool=quiz.medium_count,
-#             hard_pool=quiz.hard_count,
-#             current_difficulty='Easy'
-#         )
-#
-#         # Build the URL
-#         full_link = f"{request.scheme}://{request.get_host()}/take/{assessment.magic_link_token}/"
-#
-#         messages.success(request, full_link, extra_tags='magic_link')
-#         return redirect('quiz_list')
-#
-#     return render(request, 'create_assignment.html', {'quiz': quiz})
+
 def create_assignment(request, quiz_id):
     quiz = get_object_or_404(Quiz, id=quiz_id)
     all_candidates = Candidate.objects.all().order_by('name')
@@ -884,177 +1149,7 @@ def create_assignment(request, quiz_id):
     })
 
 
-@transaction.atomic
-def finalize_quiz_questions(request, quiz_id):
-    if request.method != "POST":
-        return redirect('view_quiz_questions', quiz_id=quiz_id)
 
-    quiz = get_object_or_404(Quiz, id=quiz_id)
-    if quiz.is_finalized:
-        return redirect('view_quiz_questions', quiz_id=quiz_id)
-
-    # 1. Get IDs for all selected levels
-    p_level_ids = quiz.primary_job_levels.values_list('id', flat=True)
-    s_level_ids = quiz.secondary_job_levels.values_list('id', flat=True)
-    if not s_level_ids:
-        s_level_ids = p_level_ids
-
-    used_question_ids = []
-
-    # --- Helper to Save Questions to Join Table ---
-    def save_pool_to_db(level_ids, counts_dict, pool_type):
-        for diff, count in counts_dict.items():
-            if count <= 0: continue
-
-            needed = count * 2
-            available = list(Question.objects.filter(
-                job_level_id__in=level_ids,
-                difficulty=diff
-            ).exclude(id__in=used_question_ids))
-
-            if len(available) < needed:
-                # Fallback if pool is too small, just take what's left
-                selected = available
-            else:
-                selected = random.sample(available, needed)
-
-            # Mark as used so we don't duplicate across phases
-            for q in selected:
-                used_question_ids.append(q.id)
-
-            # Save Primary and Buffer roles
-            for i, q in enumerate(selected):
-                role = QuizQuestion.Role.PRIMARY if i < count else QuizQuestion.Role.BUFFER
-                QuizQuestion.objects.create(
-                    quiz=quiz,
-                    question=q,
-                    difficulty=diff,
-                    pool=pool_type,
-                    role=role
-                )
-
-    # 2. Finalize Primary Phase
-    primary_counts = {'Easy': quiz.easy_count, 'Medium': quiz.medium_count, 'Hard': quiz.hard_count}
-    save_pool_to_db(p_level_ids, primary_counts, QuizQuestion.Pool.PRIMARY_POOL)
-
-    # 3. Finalize Secondary (Boss) Phase
-    secondary_counts = {'Easy': quiz.sec_easy_count, 'Medium': quiz.sec_medium_count, 'Hard': quiz.sec_hard_count}
-    save_pool_to_db(s_level_ids, secondary_counts, QuizQuestion.Pool.SECONDARY_POOL)
-
-    # 4. Lock the Quiz
-    quiz.is_finalized = True
-    quiz.save()
-
-    messages.success(request, f"Question pool for '{quiz.title}' has been locked successfully.")
-    return redirect('view_quiz_questions', quiz_id=quiz_id)
-
-
-def view_finalized_quiz_questions(request, quiz_id):
-    # Use prefetch_related for the many-to-many fields
-    quiz = get_object_or_404(
-        Quiz.objects.prefetch_related('primary_job_levels', 'secondary_job_levels'),
-        id=quiz_id
-    )
-
-    # Initialize the structures the template expects
-    simulated_test = {}
-    secondary_data = {'primary': [], 'buffer': []}
-
-    # New structure for granular boss phase preview
-    simulated_secondary = {}
-
-    if quiz.is_finalized:
-        # --- 1. FETCH FROM THE JOIN TABLE (LOCKED DATA) ---
-        all_relations = QuizQuestion.objects.filter(quiz=quiz).select_related('question').prefetch_related(
-            'question__options')
-
-        # Primary Pool Recovery
-        for diff_choice in ['Easy', 'Medium', 'Hard']:
-            diff_qs = all_relations.filter(pool=QuizQuestion.Pool.PRIMARY_POOL, difficulty=diff_choice)
-            if diff_qs.exists():
-                simulated_test[diff_choice] = {
-                    'req': diff_qs.filter(role=QuizQuestion.Role.PRIMARY).count(),
-                    'primary': [rel.question for rel in diff_qs.filter(role=QuizQuestion.Role.PRIMARY)],
-                    'buffer': [rel.question for rel in diff_qs.filter(role=QuizQuestion.Role.BUFFER)],
-                }
-
-        # Secondary (Boss) Pool Recovery - Updated for granular difficulties
-        for diff_choice in ['Easy', 'Medium', 'Hard']:
-            boss_diff_qs = all_relations.filter(pool=QuizQuestion.Pool.SECONDARY_POOL, difficulty=diff_choice)
-            if boss_diff_qs.exists():
-                simulated_secondary[diff_choice] = {
-                    'req': boss_diff_qs.filter(role=QuizQuestion.Role.PRIMARY).count(),
-                    'primary': [rel.question for rel in boss_diff_qs.filter(role=QuizQuestion.Role.PRIMARY)],
-                    'buffer': [rel.question for rel in boss_diff_qs.filter(role=QuizQuestion.Role.BUFFER)],
-                }
-
-    else:
-        # --- 2. LOGIC FOR PREVIEW (RANDOM SAMPLING ON THE FLY) ---
-        p_level_ids = quiz.primary_job_levels.values_list('id', flat=True)
-        s_level_ids = quiz.secondary_job_levels.values_list('id', flat=True)
-        if not s_level_ids:
-            s_level_ids = p_level_ids
-
-        used_ids = []
-
-        # A. Primary Pool Preview (Using __in for ManyToMany)
-        primary_configs = [
-            ('Easy', quiz.easy_count),
-            ('Medium', quiz.medium_count),
-            ('Hard', quiz.hard_count)
-        ]
-
-        for diff, count in primary_configs:
-            needed = count * 2
-            available = list(Question.objects.filter(
-                job_level_id__in=p_level_ids,
-                difficulty=diff
-            ).prefetch_related('options'))
-
-            if len(available) >= needed:
-                selected = random.sample(available, needed)
-                simulated_test[diff] = {
-                    'req': count,
-                    'primary': selected[:count],
-                    'buffer': selected[count:],
-                }
-                used_ids.extend([q.id for q in selected])
-            else:
-                simulated_test[diff] = {'req': count, 'primary': available, 'buffer': []}
-
-        # B. Secondary Pool (Boss Phase) Preview - Updated for new counts
-        secondary_configs = [
-            ('Easy', quiz.sec_easy_count),
-            ('Medium', quiz.sec_medium_count),
-            ('Hard', quiz.sec_hard_count)
-        ]
-
-        for diff, count in secondary_configs:
-            if count == 0: continue
-
-            needed = count * 2
-            available = list(Question.objects.filter(
-                job_level_id__in=s_level_ids,
-                difficulty=diff
-            ).exclude(id__in=used_ids).prefetch_related('options'))
-
-            if len(available) >= needed:
-                selected = random.sample(available, needed)
-                simulated_secondary[diff] = {
-                    'req': count,
-                    'primary': selected[:count],
-                    'buffer': selected[count:],
-                }
-                used_ids.extend([q.id for q in selected])
-            else:
-                simulated_secondary[diff] = {'req': count, 'primary': available, 'buffer': []}
-
-    return render(request, 'view_quiz_questions.html', {
-        'quiz': quiz,
-        'simulated_primary': simulated_test,  # Renamed to match the template logic
-        'simulated_secondary': simulated_secondary,  # New granular structure
-        'is_finalized': quiz.is_finalized
-    })
 # ============================================================
 #  CONSTANTS
 # ============================================================
@@ -1136,10 +1231,7 @@ BUFFER_BORROW_PENALTY = {
     'Hard':   -2,
 }
 
-# OLD - Remove this
-# DIFFICULTY_ORDER = ['Easy', 'Medium', 'Hard', 'Secondary']
 
-# NEW - Separate orders for each phase
 MAIN_DIFFICULTY_ORDER = ['Easy', 'Medium', 'Hard']
 SECONDARY_DIFFICULTY_ORDER = ['Easy', 'Medium', 'Hard']
 
@@ -1446,7 +1538,7 @@ def _complete_main_exam(assessment, session, quiz):
 
         assessment.status = Assessment.Status.COMPLETED
         assessment.final_score = assessment.main_exam_score  # Only main score here
-        assessment.save(update_fields=['status', 'final_score'])
+        assessment.save(update_fields=['status', 'final_score', 'main_exam_score', 'main_exam_completed_at'])
 
         return False  # End assessment
 
@@ -1470,7 +1562,7 @@ def _complete_assessment(assessment, session, quiz):
         assessment.secondary_exam_score = session.secondary_running_score  # Store raw marks
 
         # Calculate combined final score (optional: you can weight them differently)
-        assessment.final_score = assessment.main_exam_score  # Or combine both
+        assessment.final_score = assessment.main_exam_score + session.secondary_running_score # Or combine both
 
         session.is_active = False
         session.current_question = None
