@@ -1,15 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% if messages %}
-    <div style="margin-bottom: 20px;">
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}" style="padding: 15px; border-radius: 8px; margin-bottom: 10px; background: {% if message.tags == 'success' %}#f0fdf4; color: #166534; border: 1px solid #bbf7d0;{% else %}#fef2f2; color: #991b1b; border: 1px solid #fecaca;{% endif %}">
-                {{ message }}
-            </div>
-        {% endfor %}
-    </div>
-{% endif %}
+
 
 <div style="margin-bottom: 20px;">
     <a href="{% url 'job_dashboard' %}" style="text-decoration: none; color: var(--primary); font-weight: 600;">← Back to Folders</a>

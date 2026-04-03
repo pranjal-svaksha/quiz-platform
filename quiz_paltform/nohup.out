@@ -32,3 +32,76 @@ https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/READM
 [02/Apr/2026 12:21:39] "GET /jobs/ HTTP/1.1" 200 7586
 [02/Apr/2026 12:21:43] "GET /jobs/ HTTP/1.1" 200 7586
 [02/Apr/2026 12:22:19] "GET /jobs/ HTTP/1.1" 200 7586
+Watching for file changes with StatReloader
+/home/pranjal/Desktop/quiz_app_safe/quiz-platform/quiz_paltform/quiz/ai_services.py:3: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+[03/Apr/2026 11:15:10] "GET / HTTP/1.1" 200 7586
+[03/Apr/2026 11:15:12] "GET /quizzes/4da26a3d-00eb-4b6b-b40b-4027b56a0f92/questions/ HTTP/1.1" 200 384308
+[03/Apr/2026 11:15:13] "GET /jobs/ HTTP/1.1" 200 7586
+[03/Apr/2026 11:15:15] "GET /jobs/ HTTP/1.1" 200 7586
+/home/pranjal/Desktop/quiz_app_safe/quiz-platform/quiz_paltform/quiz_paltform/settings.py changed, reloading.
+Performing system checks...
+
+System check identified no issues (0 silenced).
+April 03, 2026 - 11:14:51
+Django version 6.0.3, using settings 'quiz_paltform.settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/6.0/howto/deployment/
+PRIMARY DATA: {'Easy': {'count': 20, 'sel_primary': ['9541f7a8-f327-454a-9413-c9f623917fbd', 'a9ed79c7-5710-4b10-b6c5-d85bbfcd4f93', 'af931260-8b79-42a5-96ce-5a8180697fac', '3cd46041-5f2b-49a5-9cf0-02d7c273466f', 'e59fb9de-4bb8-4e53-966d-4fc290ed2419'], 'sel_buffer': ['0177536a-864d-45ad-85a9-d2cd705382d4', '9f803b58-a2dd-467c-8ff9-44c7362e9d33', '7d82eee5-1422-419d-b200-e00394587fa3', '6de95a61-2a15-43a0-9008-03d89819a7f8', 'f9f498dd-0749-46c2-ab27-7f2a044583de']}, 'Medium': {'count': 40, 'sel_primary': ['fe35d5e8-7334-4b9a-a3ee-c8c2ca6ae872', '7e55621e-2b71-44fd-a2b8-7474750adf2e', '3998de77-cd8a-4796-8578-eea1b6d88489', 'a63d51ad-6a4a-4d69-a328-14ce28bb9bb1', 'e58b140f-3afe-465b-8177-a51ef235807b', 'dcf1df54-6810-47a0-8563-363a3ddafddd', '5e062863-c81c-4d55-86c9-09434b4f4a9a', 'bcef0605-d133-40a0-8170-ffcdfda4a095', '8ebecdd3-51f1-43f1-b2e3-154beb4b90da', '9a3fc142-20f5-4a83-a70b-ca9dc2547e70'], 'sel_buffer': ['9bb84321-6e1c-4fbd-be6d-9fda699e697e', '544b000e-2c24-462a-bb0d-1f7a48818752', '278ae688-1099-4be3-bfa8-9a1ad7a505bf', '58d0ea8c-bfcb-4e3a-a86c-1c737df69fca', 'd341007c-c308-409a-a0cc-fd7f946afe08', '2a3843de-4dd3-4870-8ed0-633d2705af80', '58ac6591-3e46-407b-bb6b-a2bbefb6afd0', 'b5c30e9e-e315-4781-ad25-0f14d9a23849', 'c2ae41e8-102d-4f0f-aac5-4b638c05ffee', 'aa5bb19a-a6c3-4131-b220-e0a3390d258f']}, 'Hard': {'count': 20, 'sel_primary': ['9e26ab93-df04-47eb-960c-fcae77a91417', '214be24f-442d-40ce-a764-9762c72f194c', '54919083-f287-453f-829a-576a45e6ef8b', '900a4ec4-75c1-4f6a-a80d-b8aa81862b54', '72b0bb91-a20b-4f94-b12b-baf21fd21937'], 'sel_buffer': ['1a1dcae3-b6d8-4035-958a-9744bb1183fc', '5cc480c7-3a63-4c05-b8ee-65b2b59b8a3b', 'd9701e4b-e835-4391-b9c2-ad18404f30e7', '203be32b-d081-4ff2-acac-8df9d13b5071', '87e9962f-a48c-455f-89c1-24677a05f92e']}}
+/home/pranjal/Desktop/quiz_app_safe/quiz-platform/quiz_paltform/quiz/ai_services.py:3: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+[03/Apr/2026 11:15:59] "GET /jobs/ HTTP/1.1" 200 7586
+[03/Apr/2026 11:16:00] "GET /quizzes/ HTTP/1.1" 200 24904
+[03/Apr/2026 11:16:01] "GET /jobs/ HTTP/1.1" 200 7586
+[03/Apr/2026 11:16:03] "GET /quizzes/ HTTP/1.1" 200 24904
+[03/Apr/2026 11:16:05] "GET /assignments/ HTTP/1.1" 200 17681
+[03/Apr/2026 11:16:09] "GET /take/a9066ce8-643c-4095-9e1d-25bb6924bd43/ HTTP/1.1" 200 4888
+[03/Apr/2026 11:16:13] "GET /take/ HTTP/1.1" 404 4933
+[03/Apr/2026 11:16:17] "GET /jobs/ HTTP/1.1" 200 7586
+[03/Apr/2026 11:16:46] "GET / HTTP/1.1" 200 7586
+[03/Apr/2026 11:17:07] "GET /quizzes/ HTTP/1.1" 200 24904
+[03/Apr/2026 11:17:09] "GET /quizzes/4da26a3d-00eb-4b6b-b40b-4027b56a0f92/questions/ HTTP/1.1" 200 384308
+[03/Apr/2026 11:18:02] "GET /quizzes/4da26a3d-00eb-4b6b-b40b-4027b56a0f92/questions/ HTTP/1.1" 200 383239
+[03/Apr/2026 11:18:13] "GET /quizzes/4da26a3d-00eb-4b6b-b40b-4027b56a0f92/questions/ HTTP/1.1" 200 383239
+[03/Apr/2026 11:18:21] "POST /quiz/4da26a3d-00eb-4b6b-b40b-4027b56a0f92/save-selections/ HTTP/1.1" 400 66
+[03/Apr/2026 11:18:28] "GET /quizzes/4da26a3d-00eb-4b6b-b40b-4027b56a0f92/questions/ HTTP/1.1" 200 383239
+[03/Apr/2026 11:18:48] "GET /jobs/ HTTP/1.1" 200 7586
+[03/Apr/2026 11:18:49] "GET /quizzes/ HTTP/1.1" 200 24904
+[03/Apr/2026 11:18:50] "GET /quizzes/create/ HTTP/1.1" 200 11849
+[03/Apr/2026 11:20:24] "GET /quizzes/create/ HTTP/1.1" 200 11850
+[03/Apr/2026 11:20:54] "GET / HTTP/1.1" 200 7586
+[03/Apr/2026 11:21:09] "GET /quizzes/ HTTP/1.1" 200 24904
+[03/Apr/2026 11:21:10] "GET /assignments/ HTTP/1.1" 200 17693
+[03/Apr/2026 11:21:10] "GET /jobs/ HTTP/1.1" 200 7586
+[03/Apr/2026 11:21:13] "GET /jobs/ HTTP/1.1" 200 7586
+Performing system checks...
+
+System check identified no issues (0 silenced).
+April 03, 2026 - 11:15:57
+Django version 6.0.3, using settings 'quiz_paltform.settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+
+WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+For more information on production servers see: https://docs.djangoproject.com/en/6.0/howto/deployment/
+PRIMARY DATA: {'Easy': {'count': 20, 'sel_primary': ['9541f7a8-f327-454a-9413-c9f623917fbd', 'a9ed79c7-5710-4b10-b6c5-d85bbfcd4f93', 'af931260-8b79-42a5-96ce-5a8180697fac', '3cd46041-5f2b-49a5-9cf0-02d7c273466f', 'e59fb9de-4bb8-4e53-966d-4fc290ed2419'], 'sel_buffer': ['0177536a-864d-45ad-85a9-d2cd705382d4', '9f803b58-a2dd-467c-8ff9-44c7362e9d33', '7d82eee5-1422-419d-b200-e00394587fa3', '6de95a61-2a15-43a0-9008-03d89819a7f8', 'f9f498dd-0749-46c2-ab27-7f2a044583de']}, 'Medium': {'count': 40, 'sel_primary': ['fe35d5e8-7334-4b9a-a3ee-c8c2ca6ae872', '7e55621e-2b71-44fd-a2b8-7474750adf2e', '3998de77-cd8a-4796-8578-eea1b6d88489', 'a63d51ad-6a4a-4d69-a328-14ce28bb9bb1', 'e58b140f-3afe-465b-8177-a51ef235807b', 'dcf1df54-6810-47a0-8563-363a3ddafddd', '5e062863-c81c-4d55-86c9-09434b4f4a9a', 'bcef0605-d133-40a0-8170-ffcdfda4a095', '8ebecdd3-51f1-43f1-b2e3-154beb4b90da', '9a3fc142-20f5-4a83-a70b-ca9dc2547e70'], 'sel_buffer': ['9bb84321-6e1c-4fbd-be6d-9fda699e697e', '544b000e-2c24-462a-bb0d-1f7a48818752', '278ae688-1099-4be3-bfa8-9a1ad7a505bf', '58d0ea8c-bfcb-4e3a-a86c-1c737df69fca', 'd341007c-c308-409a-a0cc-fd7f946afe08', '2a3843de-4dd3-4870-8ed0-633d2705af80', '58ac6591-3e46-407b-bb6b-a2bbefb6afd0', 'b5c30e9e-e315-4781-ad25-0f14d9a23849', 'c2ae41e8-102d-4f0f-aac5-4b638c05ffee', 'aa5bb19a-a6c3-4131-b220-e0a3390d258f']}, 'Hard': {'count': 20, 'sel_primary': ['9e26ab93-df04-47eb-960c-fcae77a91417', '214be24f-442d-40ce-a764-9762c72f194c', '54919083-f287-453f-829a-576a45e6ef8b', '900a4ec4-75c1-4f6a-a80d-b8aa81862b54', '72b0bb91-a20b-4f94-b12b-baf21fd21937'], 'sel_buffer': ['1a1dcae3-b6d8-4035-958a-9744bb1183fc', '5cc480c7-3a63-4c05-b8ee-65b2b59b8a3b', 'd9701e4b-e835-4391-b9c2-ad18404f30e7', '203be32b-d081-4ff2-acac-8df9d13b5071', '87e9962f-a48c-455f-89c1-24677a05f92e']}}
+PRIMARY DATA: {'Easy': {'count': 20, 'sel_primary': ['9541f7a8-f327-454a-9413-c9f623917fbd', 'a9ed79c7-5710-4b10-b6c5-d85bbfcd4f93', 'af931260-8b79-42a5-96ce-5a8180697fac', '3cd46041-5f2b-49a5-9cf0-02d7c273466f', 'e59fb9de-4bb8-4e53-966d-4fc290ed2419'], 'sel_buffer': ['0177536a-864d-45ad-85a9-d2cd705382d4', '9f803b58-a2dd-467c-8ff9-44c7362e9d33', '7d82eee5-1422-419d-b200-e00394587fa3', '6de95a61-2a15-43a0-9008-03d89819a7f8', 'f9f498dd-0749-46c2-ab27-7f2a044583de']}, 'Medium': {'count': 40, 'sel_primary': ['fe35d5e8-7334-4b9a-a3ee-c8c2ca6ae872', '7e55621e-2b71-44fd-a2b8-7474750adf2e', '3998de77-cd8a-4796-8578-eea1b6d88489', 'a63d51ad-6a4a-4d69-a328-14ce28bb9bb1', 'e58b140f-3afe-465b-8177-a51ef235807b', 'dcf1df54-6810-47a0-8563-363a3ddafddd', '5e062863-c81c-4d55-86c9-09434b4f4a9a', 'bcef0605-d133-40a0-8170-ffcdfda4a095', '8ebecdd3-51f1-43f1-b2e3-154beb4b90da', '9a3fc142-20f5-4a83-a70b-ca9dc2547e70'], 'sel_buffer': ['9bb84321-6e1c-4fbd-be6d-9fda699e697e', '544b000e-2c24-462a-bb0d-1f7a48818752', '278ae688-1099-4be3-bfa8-9a1ad7a505bf', '58d0ea8c-bfcb-4e3a-a86c-1c737df69fca', 'd341007c-c308-409a-a0cc-fd7f946afe08', '2a3843de-4dd3-4870-8ed0-633d2705af80', '58ac6591-3e46-407b-bb6b-a2bbefb6afd0', 'b5c30e9e-e315-4781-ad25-0f14d9a23849', 'c2ae41e8-102d-4f0f-aac5-4b638c05ffee', 'aa5bb19a-a6c3-4131-b220-e0a3390d258f']}, 'Hard': {'count': 20, 'sel_primary': ['9e26ab93-df04-47eb-960c-fcae77a91417', '214be24f-442d-40ce-a764-9762c72f194c', '54919083-f287-453f-829a-576a45e6ef8b', '900a4ec4-75c1-4f6a-a80d-b8aa81862b54', '72b0bb91-a20b-4f94-b12b-baf21fd21937'], 'sel_buffer': ['1a1dcae3-b6d8-4035-958a-9744bb1183fc', '5cc480c7-3a63-4c05-b8ee-65b2b59b8a3b', 'd9701e4b-e835-4391-b9c2-ad18404f30e7', '203be32b-d081-4ff2-acac-8df9d13b5071', '87e9962f-a48c-455f-89c1-24677a05f92e']}}
+PRIMARY DATA: {'Easy': {'count': 20, 'sel_primary': ['9541f7a8-f327-454a-9413-c9f623917fbd', 'a9ed79c7-5710-4b10-b6c5-d85bbfcd4f93', 'af931260-8b79-42a5-96ce-5a8180697fac', '3cd46041-5f2b-49a5-9cf0-02d7c273466f', 'e59fb9de-4bb8-4e53-966d-4fc290ed2419'], 'sel_buffer': ['0177536a-864d-45ad-85a9-d2cd705382d4', '9f803b58-a2dd-467c-8ff9-44c7362e9d33', '7d82eee5-1422-419d-b200-e00394587fa3', '6de95a61-2a15-43a0-9008-03d89819a7f8', 'f9f498dd-0749-46c2-ab27-7f2a044583de']}, 'Medium': {'count': 40, 'sel_primary': ['fe35d5e8-7334-4b9a-a3ee-c8c2ca6ae872', '7e55621e-2b71-44fd-a2b8-7474750adf2e', '3998de77-cd8a-4796-8578-eea1b6d88489', 'a63d51ad-6a4a-4d69-a328-14ce28bb9bb1', 'e58b140f-3afe-465b-8177-a51ef235807b', 'dcf1df54-6810-47a0-8563-363a3ddafddd', '5e062863-c81c-4d55-86c9-09434b4f4a9a', 'bcef0605-d133-40a0-8170-ffcdfda4a095', '8ebecdd3-51f1-43f1-b2e3-154beb4b90da', '9a3fc142-20f5-4a83-a70b-ca9dc2547e70'], 'sel_buffer': ['9bb84321-6e1c-4fbd-be6d-9fda699e697e', '544b000e-2c24-462a-bb0d-1f7a48818752', '278ae688-1099-4be3-bfa8-9a1ad7a505bf', '58d0ea8c-bfcb-4e3a-a86c-1c737df69fca', 'd341007c-c308-409a-a0cc-fd7f946afe08', '2a3843de-4dd3-4870-8ed0-633d2705af80', '58ac6591-3e46-407b-bb6b-a2bbefb6afd0', 'b5c30e9e-e315-4781-ad25-0f14d9a23849', 'c2ae41e8-102d-4f0f-aac5-4b638c05ffee', 'aa5bb19a-a6c3-4131-b220-e0a3390d258f']}, 'Hard': {'count': 20, 'sel_primary': ['9e26ab93-df04-47eb-960c-fcae77a91417', '214be24f-442d-40ce-a764-9762c72f194c', '54919083-f287-453f-829a-576a45e6ef8b', '900a4ec4-75c1-4f6a-a80d-b8aa81862b54', '72b0bb91-a20b-4f94-b12b-baf21fd21937'], 'sel_buffer': ['1a1dcae3-b6d8-4035-958a-9744bb1183fc', '5cc480c7-3a63-4c05-b8ee-65b2b59b8a3b', 'd9701e4b-e835-4391-b9c2-ad18404f30e7', '203be32b-d081-4ff2-acac-8df9d13b5071', '87e9962f-a48c-455f-89c1-24677a05f92e']}}
+PRIMARY DATA: {'Easy': {'count': 20, 'sel_primary': ['9541f7a8-f327-454a-9413-c9f623917fbd', 'a9ed79c7-5710-4b10-b6c5-d85bbfcd4f93', 'af931260-8b79-42a5-96ce-5a8180697fac', '3cd46041-5f2b-49a5-9cf0-02d7c273466f', 'e59fb9de-4bb8-4e53-966d-4fc290ed2419'], 'sel_buffer': ['0177536a-864d-45ad-85a9-d2cd705382d4', '9f803b58-a2dd-467c-8ff9-44c7362e9d33', '7d82eee5-1422-419d-b200-e00394587fa3', '6de95a61-2a15-43a0-9008-03d89819a7f8', 'f9f498dd-0749-46c2-ab27-7f2a044583de']}, 'Medium': {'count': 40, 'sel_primary': ['fe35d5e8-7334-4b9a-a3ee-c8c2ca6ae872', '7e55621e-2b71-44fd-a2b8-7474750adf2e', '3998de77-cd8a-4796-8578-eea1b6d88489', 'a63d51ad-6a4a-4d69-a328-14ce28bb9bb1', 'e58b140f-3afe-465b-8177-a51ef235807b', 'dcf1df54-6810-47a0-8563-363a3ddafddd', '5e062863-c81c-4d55-86c9-09434b4f4a9a', 'bcef0605-d133-40a0-8170-ffcdfda4a095', '8ebecdd3-51f1-43f1-b2e3-154beb4b90da', '9a3fc142-20f5-4a83-a70b-ca9dc2547e70'], 'sel_buffer': ['9bb84321-6e1c-4fbd-be6d-9fda699e697e', '544b000e-2c24-462a-bb0d-1f7a48818752', '278ae688-1099-4be3-bfa8-9a1ad7a505bf', '58d0ea8c-bfcb-4e3a-a86c-1c737df69fca', 'd341007c-c308-409a-a0cc-fd7f946afe08', '2a3843de-4dd3-4870-8ed0-633d2705af80', '58ac6591-3e46-407b-bb6b-a2bbefb6afd0', 'b5c30e9e-e315-4781-ad25-0f14d9a23849', 'c2ae41e8-102d-4f0f-aac5-4b638c05ffee', 'aa5bb19a-a6c3-4131-b220-e0a3390d258f']}, 'Hard': {'count': 20, 'sel_primary': ['9e26ab93-df04-47eb-960c-fcae77a91417', '214be24f-442d-40ce-a764-9762c72f194c', '54919083-f287-453f-829a-576a45e6ef8b', '900a4ec4-75c1-4f6a-a80d-b8aa81862b54', '72b0bb91-a20b-4f94-b12b-baf21fd21937'], 'sel_buffer': ['1a1dcae3-b6d8-4035-958a-9744bb1183fc', '5cc480c7-3a63-4c05-b8ee-65b2b59b8a3b', 'd9701e4b-e835-4391-b9c2-ad18404f30e7', '203be32b-d081-4ff2-acac-8df9d13b5071', '87e9962f-a48c-455f-89c1-24677a05f92e']}}

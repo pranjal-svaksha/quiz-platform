@@ -1,9 +1,9 @@
 from django.contrib import admin
-from django.urls import path, include  # <-- Don't forget to import 'include' here!
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
-    # This tells Django: "Any web traffic that comes in, send it to my app's urls.py"
-    path('', include('quiz.urls')),
+    path('', include('quiz.urls')), # Sends traffic to your app
 ]
+
+handler404 = 'quiz.views.custom_404_view'
